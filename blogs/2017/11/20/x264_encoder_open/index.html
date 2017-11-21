@@ -73,6 +73,7 @@ x264_sps_init                                   // initial sps parameters
 x264_pps_init                                   // initial pps parameters
 x264_cqm_init                                   // quant &amp; dequant parameters initial
 Init frames parameters, such as max reference numbers, rc related..
+x264_rdo_init                                   // rate distortion parameters initial
 x264_predict_xxx_init ~ x264_bitstream_xxx_init // register function for function pointers
 x264_cabac_init || x264_cavlc_init              // initial entropy encoding parameters
 x264_analyse_init_costs                         // prepare parameters be used to calc cost in analyse step
@@ -96,6 +97,14 @@ x264_ratecontrol_new                            // rate control start
 <li>
 <p><em>x264_cqm_init</em>:</p>
 <p>Pre-calculate the quan &amp; dequant parameters. For q/dq algorithm, please refer to ...</p>
+</li>
+<li>
+<p><em>x264_rdo_init</em>:</p>
+<p>Initialize the bit cost array accordint to CABAC state trasition</p>
+</li>
+<li>
+<p><em>x264_predict_xxx_init ~ x264_bitstream_xxx_init</em>:</p>
+<p>Funtion pointer initialization for those utility function like prediection, dct. etc</p>
 </li>
 </ul>
             </div><!-- /.entry-content -->
@@ -132,12 +141,12 @@ x264_ratecontrol_new                            // rate control start
 
 <h4>Tags</h4>
 	<ul class="blank">
-	    <li class="tag-1"><a href="/tag/web.html">web</a></li>
-	    <li class="tag-1"><a href="/tag/x264.html">x264</a></li>
-	    <li class="tag-1"><a href="/tag/h264.html">h264</a></li>
-	    <li class="tag-1"><a href="/tag/video-codec.html">Video Codec</a></li>
-	    <li class="tag-1"><a href="/tag/pelican.html">pelican</a></li>
+	    <li class="tag-4"><a href="/tag/pelican.html">Pelican</a></li>
 	    <li class="tag-4"><a href="/tag/travel.html">Travel</a></li>
+	    <li class="tag-3"><a href="/tag/x264.html">x264</a></li>
+	    <li class="tag-1"><a href="/tag/video-codec.html">Video Codec</a></li>
+	    <li class="tag-4"><a href="/tag/web.html">web</a></li>
+	    <li class="tag-1"><a href="/tag/h264.html">h264</a></li>
 </ul>
 
 
