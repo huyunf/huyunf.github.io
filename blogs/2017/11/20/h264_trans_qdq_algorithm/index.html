@@ -101,10 +101,37 @@
 <hr>
 <p>According to previous chapter, the process of inverse transform is <span class="math">\(X^{\prime}=C^T(Y \bigotimes E)C\)</span>. Then the inverse quantization is:</p>
 <p><span class="math">\(X^{\prime}_{ij}=Z_{ij}*Qstep*PF*64\)</span></p>
-<p>Let <span class="math">\(V=Qstep * PF *64\)</span>, which is also defined as pre-calculated table for <span class="math">\(0 \eqslantless QP \eqslantless 5\)</span></p>
+<p>Let <span class="math">\(V=Qstep * PF *64\)</span>, which is also defined as pre-calculated table for <span class="math">\(0 \leq QP \leq 5\)</span></p>
 <p><span class="math">\(W^{\prime}_{ij} = Z_{ij}*V_{ij}*2^{floor(QP/6)}\)</span></p>
 <p>The table of V:</p>
 <p><img alt="Photo" src="/blogs/2017/11/20/h264_trans_qdq_algorithm/h264_qdq_dqV.png" width="80%"></p>
+<h4><strong>4x4 luma DC coefficient transform and quantization (16x16 Intra-mode only)</strong></h4>
+<hr>
+<p>If the macroblock is encoded in 16x16 Intra prediction mode (where the entire 16x16 luminance component is predicted from neighbouring pixels), each 4x4 residual block is first transformed using the “core” transform described above <span class="math">\(C_{f}XC^{T}_{f}\)</span>. The DC coefficient of each 4x4 block is then transformed again using a 4x4 Hadamard transform:</p>
+<p><img alt="Photo" src="/blogs/2017/11/20/h264_trans_qdq_algorithm/h264_qdq_4x4hadamard.png" width="80%"></p>
+<p><span class="math">\(W_D\)</span> is the block of 4x4 DC coefficients. The output coefficients <span class="math">\(Y_{D}\)</span> are divided by 2 (with rounding). Then the <span class="math">\(Y_D\)</span> are quantized:</p>
+<p><span class="math">\(Z_{D(ij)}=(Y_{D(ij)} \bullet MF_{(0,0)} + 2f) &gt;&gt; (qbits+1)\)</span></p>
+<p>When decoding, the inverse Hadamard transform is applied followed by rescaling (not reversed as might be expected). That is [4x4DCT-&gt;4x4DC Hadamard-&gt;DC quantization-&gt;4x4DC inverse Hadamard-&gt;DC dequantization]:</p>
+<p><img alt="Photo" src="/blogs/2017/11/20/h264_trans_qdq_algorithm/h264_qdq_4x4_inversehadamard.png" width="80%"></p>
+<p>If <span class="math">\(QP \geq 12\)</span>, dequantization is performed by:</p>
+<p><span class="math">\(W_D = W_{QD} \bullet V_{(0,0)} \bullet 2^{floor(QP/6)-2}\)</span></p>
+<p>if <span class="math">\(QP &lt; 12\)</span>, dequantization is performed by:</p>
+<p><span class="math">\(W_D = (W_{QD} \bullet V_{(0,0)}+2^{1-floor(QP/6))}&gt;&gt;(2-floor(QP/6))\)</span></p>
+<h4><strong>2x2 chroma DC coefficient transform and quantization</strong></h4>
+<hr>
+<p>The DC of chroma have the same operation of chroma. 2x2 Transform:</p>
+<p><img alt="Photo" src="/blogs/2017/11/20/h264_trans_qdq_algorithm/h264_qdq_2x2hadamard.png" width="50%"></p>
+<p>The Quantization of the 2x2 output if performed by:</p>
+<p><span class="math">\(Z_{D} = Y_{D(ij)} \bullet MF_{(0,0)}+2f)&gt;&gt;(qbits+1)\)</span></p>
+<p>during decoding, the inverse transform is:</p>
+<p><img alt="Photo" src="/blogs/2017/11/20/h264_trans_qdq_algorithm/h264_qdq_2x2_inversehadamard.png" width="50%"></p>
+<p>If <span class="math">\(QP \geq 6\)</span>, dequantization is performed by:</p>
+<p><span class="math">\(W_D = W_{QD} \bullet V_{(0,0)} \bullet 2^{floor(QP/6)-1}\)</span></p>
+<p>if <span class="math">\(QP &lt; 6\)</span>, dequantization is performed by:</p>
+<p><span class="math">\(W_D = (W_{QD} \bullet V_{(0,0)})&gt;&gt;1\)</span></p>
+<h4><strong>Transform &amp; QDQ Flow</strong></h4>
+<hr>
+<p><img alt="Photo" src="/blogs/2017/11/20/h264_trans_qdq_algorithm/h264_qdq_flowchart.png" width="100%"></p>
 <script type="text/javascript">if (!document.getElementById('mathjaxscript_pelican_#%@#$@#')) {
     var align = "center",
         indent = "0em",
@@ -195,11 +222,11 @@
 <h4>Tags</h4>
 	<ul class="blank">
 	    <li class="tag-4"><a href="/tag/web.html">web</a></li>
-	    <li class="tag-3"><a href="/tag/x264.html">x264</a></li>
-	    <li class="tag-1"><a href="/tag/video-codec.html">Video Codec</a></li>
-	    <li class="tag-4"><a href="/tag/travel.html">Travel</a></li>
 	    <li class="tag-4"><a href="/tag/pelican.html">Pelican</a></li>
+	    <li class="tag-3"><a href="/tag/x264.html">x264</a></li>
+	    <li class="tag-4"><a href="/tag/travel.html">Travel</a></li>
 	    <li class="tag-1"><a href="/tag/h264.html">h264</a></li>
+	    <li class="tag-1"><a href="/tag/video-codec.html">Video Codec</a></li>
 </ul>
 
 
