@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="english">
+<head>
+
+        <title>H264 Motion Estimation & Inter Prediction</title>
+        <meta charset="utf-8" />
+
+
+        <!-- Mobile viewport optimized: j.mp/bplateviewport -->
+        <meta name="viewport" content="width=device-width,initial-scale=1, maximum-scale=1">
+
+        <link rel="stylesheet" type="text/css" href="https://huyunf.github.io/theme/gumby.css" />
+        <link rel="stylesheet" type="text/css" href="https://huyunf.github.io/theme/style.css" />
+        <link rel="stylesheet" type="text/css" href="https://huyunf.github.io/theme/pygment.css" />
+
+        <script src="https://huyunf.github.io/theme/js/libs/modernizr-2.6.2.min.js"></script>
+
+
+
+
+</head>
+
+<body id="index" class="home">
+
+
+    <div class="container">
+
+        <div class="row">
+
+          <header id="banner" class="body">
+                  <h1><a href="https://huyunf.github.io/">Everyday One Step Forward <strong></strong></a></h1>
+          </header><!-- /#banner -->
+
+            <div id="navigation" class="navbar row">
+              <a href="#" gumby-trigger="#navigation &gt; ul" class="toggle"><i class="icon-menu"></i></a>
+             
+              <ul class="columns">
+                <li><a href="https://huyunf.github.io/">Home</a></li>
+
+                <li><a href="https://huyunf.github.io/category/life.html">Life</a></li>
+                <li class="active"><a href="https://huyunf.github.io/category/technology.html">Technology</a></li>
+            <li><a href="https://huyunf.github.io/archives.html">Archives</a>
+              </ul>
+            </div>
+
+<section id="content" class="body">
+
+   <div class="row">
+        <div class="eleven columns">
+
+
+            <header>
+              <h2 class="entry-title">
+                <a href="https://huyunf.github.io/blogs/2017/11/20/h264_inter_algorithm/" rel="bookmark"
+                   title="Permalink to H264 Motion Estimation & Inter Prediction">H264 Motion Estimation & Inter Prediction</a></h2>
+           
+            </header>
+            <footer class="post-info">
+              <abbr class="published" title="2017-11-20T00:00:00-08:00">
+                Mon 20 November 2017
+              </abbr>
+              <address class="vcard author">By 
+                <a class="url fn" href="https://huyunf.github.io/author/yf.html"> YF</a>
+              </address>
+            </footer><!-- /.post-info -->
+            <div class="entry-content">
+              <h4><strong>Introduction</strong></h4>
+<hr>
+<p>Inter prediction creates a prediction model from one or more previously encoded video frames. The model is formed by shifting samples in the reference frame(s) (motion compensated prediction). The AVC CODEC uses block-based motion compensation, the same principle adopted by every major coding standard since H.261. Important differences from earlier standards include the support for a range of block sizes (down to 4x4) and fine sub-pixel motion vectors (1/4 pixel in the luma component).</p>
+<h4><strong>Tree Structured Motion Compensation</strong></h4>
+<hr>
+<p>AVC supports motion compensation block sizes ranging from 16x16 to 4x4 luminance samples with many options between the two. The luminance component of each macroblock (16x16 samples) may be split up in 4 ways: 16x16, 16x8, 8x16 or 8x8. Each of the sub-divided regions is a macroblock partition. <em>If the 8x8 mode is chosen</em>, each of the four 8x8 macroblock partitions within the macroblock may be split in a further 4 ways: 8x8, 8x4, 4x8 or 4x4 (known as macroblock sub-partitions). These partitions and sub-partitions give rise to a large number of possible combinations within each macroblock. This method of partitioning macroblocks into motion compensated sub-blocks of varying size is known as tree structured motion compensation.</p>
+<p><img alt="Photo" src="https://huyunf.github.io/blogs/2017/11/20/h264_inter_algorithm/h264_inter_tree.png" width="80%"></p>
+<p>A separate motion vector is required for each partition or sub-partition. Each motion vector must be coded and transmitted; in addition, the choice of partition(s) must be encoded in the compressed bitstream. Choosing a large partition size (e.g. 16x16, 16x8, 8x16) means that a small number of bits are required to signal the choice of motion vector(s) and the type of partition; however, the motion compensated residual may contain a significant amount of energy in frame areas with high detail. Choosing a small partition size (e.g. 8x4, 4x4, etc.) may give a lower-energy residual after motion compensation but requires a larger number of bits to signal the motion vectors and choice of partition(s). The choice of partition size therefore has a significant impact on compression performance. In general, a large partition size is appropriate for homogeneous areas of the frame and a small partition size may be beneficial for detailed areas.</p>
+<p>The resolution of each chroma component in a macroblock (Cr and Cb) is half that of the luminance (luma) component. Each chroma block is partitioned in the same way as the luma component, except that the partition sizes have exactly half the horizontal and vertical resolution (an 8x16 partition in luma corresponds to a 4x8 partition in chroma; an 8x4 partition in luma corresponds to 4x2 in chroma; and so on). The horizontal and vertical components of each motion vector (one per partition) are halved when applied to the chroma blocks.</p>
+<h4><strong>Sub-pixel Motion Vectors</strong></h4>
+<hr>
+<p>The accuracy of motion compensation is in units of one quarter of the distance between luma samples. In case the motion vector points to an integer-sample position, the prediction signal consists of the corresponding samples of the reference picture; otherwise the corresponding sample is obtained using interpolation to generate noninteger positions. The prediction values at half-sample positions are obtained by applying a one-dimensional 6-tap FIR filter horizontally and vertically. Prediction values at quarter-sample positions are generated by averaging samples at integer- and half-sample positions.</p>
+<p><img alt="Photo" src="https://huyunf.github.io/blogs/2017/11/20/h264_inter_algorithm/h264_inter_subpixel.png" width="40%"></p>
+<p>The 6-tap filter as follow:</p>
+<p><span class="math">\(b_1 = (E-5F+20G+20H-5I+J)\)</span></p>
+<p><span class="math">\(h_1 = (A-5C+20G+20M-5R+T)\)</span></p>
+<p>The final prdiction value for <span class="math">\(b\)</span> and <span class="math">\(h\)</span> are obtained as follows and clipped to range 0-255:</p>
+<p><span class="math">\(b=(b_1 + 16)&gt;&gt;5\)</span></p>
+<p><span class="math">\(h=(h_1 + 16)&gt;&gt;5\)</span></p>
+<p>The samples at half sample positions j are obtained by:</p>
+<p><span class="math">\(j_1 = cc - 5dd + 20h_1 + 20m_1 - 5ee + ff\)</span></p>
+<p><span class="math">\(j = (j_1 + 512)&gt;&gt;10\)</span></p>
+<p>The samples at quarter sample positions labeled as a,c,d,n,f,i,k and q are derived by :</p>
+<p><span class="math">\(a = (G + b + 1)&gt;&gt;1\)</span></p>
+<p><span class="math">\(e = (b + h + 1)&gt;&gt;1\)</span></p>
+<script type="text/javascript">if (!document.getElementById('mathjaxscript_pelican_#%@#$@#')) {
+    var align = "center",
+        indent = "0em",
+        linebreak = "false";
+
+    if (false) {
+        align = (screen.width < 768) ? "left" : align;
+        indent = (screen.width < 768) ? "0em" : indent;
+        linebreak = (screen.width < 768) ? 'true' : linebreak;
+    }
+
+    var mathjaxscript = document.createElement('script');
+    mathjaxscript.id = 'mathjaxscript_pelican_#%@#$@#';
+    mathjaxscript.type = 'text/javascript';
+    mathjaxscript.src = 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML';
+    mathjaxscript[(window.opera ? "innerHTML" : "text")] =
+        "MathJax.Hub.Config({" +
+        "    config: ['MMLorHTML.js']," +
+        "    TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'AMS' } }," +
+        "    jax: ['input/TeX','input/MathML','output/HTML-CSS']," +
+        "    extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']," +
+        "    displayAlign: '"+ align +"'," +
+        "    displayIndent: '"+ indent +"'," +
+        "    showMathMenu: true," +
+        "    messageStyle: 'normal'," +
+        "    tex2jax: { " +
+        "        inlineMath: [ ['\\\\(','\\\\)'] ], " +
+        "        displayMath: [ ['$$','$$'] ]," +
+        "        processEscapes: true," +
+        "        preview: 'TeX'," +
+        "    }, " +
+        "    'HTML-CSS': { " +
+        "        styles: { '.MathJax_Display, .MathJax .mo, .MathJax .mi, .MathJax .mn': {color: 'inherit ! important'} }," +
+        "        linebreaks: { automatic: "+ linebreak +", width: '90% container' }," +
+        "    }, " +
+        "}); " +
+        "if ('default' !== 'default') {" +
+            "MathJax.Hub.Register.StartupHook('HTML-CSS Jax Ready',function () {" +
+                "var VARIANT = MathJax.OutputJax['HTML-CSS'].FONTDATA.VARIANT;" +
+                "VARIANT['normal'].fonts.unshift('MathJax_default');" +
+                "VARIANT['bold'].fonts.unshift('MathJax_default-bold');" +
+                "VARIANT['italic'].fonts.unshift('MathJax_default-italic');" +
+                "VARIANT['-tex-mathit'].fonts.unshift('MathJax_default-italic');" +
+            "});" +
+            "MathJax.Hub.Register.StartupHook('SVG Jax Ready',function () {" +
+                "var VARIANT = MathJax.OutputJax.SVG.FONTDATA.VARIANT;" +
+                "VARIANT['normal'].fonts.unshift('MathJax_default');" +
+                "VARIANT['bold'].fonts.unshift('MathJax_default-bold');" +
+                "VARIANT['italic'].fonts.unshift('MathJax_default-italic');" +
+                "VARIANT['-tex-mathit'].fonts.unshift('MathJax_default-italic');" +
+            "});" +
+        "}";
+    (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
+}
+</script>
+            </div><!-- /.entry-content -->
+            <div class="comments">
+              <h3>Comments</h3>
+              <div id="disqus_thread"></div>
+              <script type="text/javascript">
+                var disqus_identifier = "blogs/2017/11/20/h264_inter_algorithm/";
+                (function() {
+                var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+                dsq.src = 'https://huyunf.disqus.com/embed.js';
+                (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+                })();
+              </script>
+            </div>
+
+
+        </div><!-- /.eleven.columns -->
+
+<div class="three columns">
+
+<h4>Pages</h4>
+
+ <ul>
+      <li><a href="https://huyunf.github.io/pages/about.html">About</a></li>
+  </ul>
+
+<h4>Categories</h4>
+<ul class="blank">
+		<li><a href="https://huyunf.github.io/category/life.html">Life</a></li>
+		<li><a href="https://huyunf.github.io/category/technology.html">Technology</a></li>
+</ul>
+
+
+<h4>Tags</h4>
+	<ul class="blank">
+	    <li class="tag-4"><a href="https://huyunf.github.io/tag/pelican.html">Pelican</a></li>
+	    <li class="tag-3"><a href="https://huyunf.github.io/tag/x264.html">x264</a></li>
+	    <li class="tag-1"><a href="https://huyunf.github.io/tag/video-codec.html">Video Codec</a></li>
+	    <li class="tag-4"><a href="https://huyunf.github.io/tag/travel.html">Travel</a></li>
+	    <li class="tag-4"><a href="https://huyunf.github.io/tag/web.html">web</a></li>
+	    <li class="tag-1"><a href="https://huyunf.github.io/tag/h264.html">h264</a></li>
+</ul>
+
+
+<nav class="widget">
+  <h4>Social</h4>
+  <ul class="blank">
+    <li><a href="https://github.com/huyunf">Github</a></li>
+    <li><a href="https://www.facebook.com/">Facebook</a></li>
+    <li><a href="https://twitter.com/">Twitter</a></li>
+  </ul>
+</nav>
+
+</div> </div><!-- /.row -->
+
+
+</section>
+
+       </div><!-- /.row -->
+    </div><!-- /.container -->
+
+
+       <div class="container.nopad bg">
+
+    
+        <footer id="credits" class="row">
+          <div class="seven columns left-center">
+
+                   <address id="about" class="vcard body">
+                    Proudly powered by <a href="http://getpelican.com/">Pelican</a>,
+                    which takes great advantage of <a href="http://python.org">Python</a>.
+                    <br />
+                    Based on the <a target="_blank" href="http://gumbyframework.com">Gumby Framework</a>
+                    </address>
+          </div>
+
+
+          <div class="seven columns">
+            <div class="row">
+              <ul class="socbtns">
+
+                <li><div class="btn primary"><a href="https://github.com/huyunf" target="_blank">Github</a></div></li>
+
+
+
+
+              </ul>
+            </div>
+          </div>
+        </footer>
+
+    </div>
+
+
+<script type="text/javascript">
+    var disqus_shortname = 'huyunf';
+    (function () {
+        var s = document.createElement('script'); s.async = true;
+        s.type = 'text/javascript';
+        s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
+        (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+    }());
+</script>
+  <script src="https://huyunf.github.io/theme/js/libs/jquery-1.9.1.min.js"></script>
+  <script src="https://huyunf.github.io/theme/js/libs/gumby.min.js"></script>
+  <script src="https://huyunf.github.io/theme/js/plugins.js"></script>
+</body>
+</html>
