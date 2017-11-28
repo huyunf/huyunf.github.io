@@ -9,11 +9,11 @@
         <!-- Mobile viewport optimized: j.mp/bplateviewport -->
         <meta name="viewport" content="width=device-width,initial-scale=1, maximum-scale=1">
 
-        <link rel="stylesheet" type="text/css" href="/theme/gumby.css" />
-        <link rel="stylesheet" type="text/css" href="/theme/style.css" />
-        <link rel="stylesheet" type="text/css" href="/theme/pygment.css" />
+        <link rel="stylesheet" type="text/css" href="https://huyunf.github.io/theme/gumby.css" />
+        <link rel="stylesheet" type="text/css" href="https://huyunf.github.io/theme/style.css" />
+        <link rel="stylesheet" type="text/css" href="https://huyunf.github.io/theme/pygment.css" />
 
-        <script src="/theme/js/libs/modernizr-2.6.2.min.js"></script>
+        <script src="https://huyunf.github.io/theme/js/libs/modernizr-2.6.2.min.js"></script>
 
 
 
@@ -28,18 +28,18 @@
         <div class="row">
 
           <header id="banner" class="body">
-                  <h1><a href="/">Everyday One Step Forward <strong></strong></a></h1>
+                  <h1><a href="https://huyunf.github.io/">Everyday One Step Forward <strong></strong></a></h1>
           </header><!-- /#banner -->
 
             <div id="navigation" class="navbar row">
               <a href="#" gumby-trigger="#navigation &gt; ul" class="toggle"><i class="icon-menu"></i></a>
              
               <ul class="columns">
-                <li><a href="/">Home</a></li>
+                <li><a href="https://huyunf.github.io/">Home</a></li>
 
-                <li><a href="/category/life.html">Life</a></li>
-                <li class="active"><a href="/category/technology.html">Technology</a></li>
-            <li><a href="/archives.html">Archives</a>
+                <li><a href="https://huyunf.github.io/category/life.html">Life</a></li>
+                <li class="active"><a href="https://huyunf.github.io/category/technology.html">Technology</a></li>
+            <li><a href="https://huyunf.github.io/archives.html">Archives</a>
               </ul>
             </div>
 
@@ -51,7 +51,7 @@
 
             <header>
               <h2 class="entry-title">
-                <a href="/blogs/2017/11/20/h264_trans_qdq_algorithm/" rel="bookmark"
+                <a href="https://huyunf.github.io/blogs/2017/11/20/h264_trans_qdq_algorithm/" rel="bookmark"
                    title="Permalink to H264 Transform, Quant & Dequant Algorithm">H264 Transform, Quant & Dequant Algorithm</a></h2>
            
             </header>
@@ -60,7 +60,7 @@
                 Mon 20 November 2017
               </abbr>
               <address class="vcard author">By 
-                <a class="url fn" href="/author/yf.html"> YF</a>
+                <a class="url fn" href="https://huyunf.github.io/author/yf.html"> YF</a>
               </address>
             </footer><!-- /.post-info -->
             <div class="entry-content">
@@ -70,19 +70,19 @@
 <h4><strong>Coefficient Scan Order</strong></h4>
 <hr>
 <p>The DC for 16x16, the other AC and chroma's DC AC coefficients scane order:</p>
-<p><img alt="Photo" src="/blogs/2017/11/20/h264_trans_qdq_algorithm/h264_qdq_Scanning_order.png" width="80%"></p>
+<p><img alt="Photo" src="https://huyunf.github.io/blogs/2017/11/20/h264_trans_qdq_algorithm/h264_qdq_Scanning_order.png" width="80%"></p>
 <h4><strong>4x4 DCT &amp; IDCT</strong></h4>
 <hr>
 <p>The 2-D DCT could be represented as </p>
 <p><span class="math">\(Y=AXA^T\)</span></p>
 <p>which could be transformed as:</p>
-<p><img alt="Photo" src="/blogs/2017/11/20/h264_trans_qdq_algorithm/h264_qdq_trasform_0.png" width="80%"></p>
+<p><img alt="Photo" src="https://huyunf.github.io/blogs/2017/11/20/h264_trans_qdq_algorithm/h264_qdq_trasform_0.png" width="80%"></p>
 <p>Thus DCT could be represented as:</p>
 <p><span class="math">\(Y=CXC^T \bigotimes E\)</span></p>
-<p><img alt="Photo" src="/blogs/2017/11/20/h264_trans_qdq_algorithm/h264_qdq_DCT.png" width="80%"></p>
+<p><img alt="Photo" src="https://huyunf.github.io/blogs/2017/11/20/h264_trans_qdq_algorithm/h264_qdq_DCT.png" width="80%"></p>
 <p>The IDCT could be represented as:</p>
 <p><span class="math">\(X^{\prime}=C^T(Y \bigotimes E)C\)</span></p>
-<p><img alt="Photo" src="/blogs/2017/11/20/h264_trans_qdq_algorithm/h264_qdq_IDCT.png" width="80%"></p>
+<p><img alt="Photo" src="https://huyunf.github.io/blogs/2017/11/20/h264_trans_qdq_algorithm/h264_qdq_IDCT.png" width="80%"></p>
 <p>The H264 DCT only perform the <span class="math">\(CXC^T\)</span> part, leave the <span class="math">\(\bigotimes E\)</span> be deal with in Quant and Dequant stage.</p>
 <h4><strong>Quantization</strong></h4>
 <hr>
@@ -91,20 +91,47 @@
 <p>Quantization is a very important step in data compression. For H264:</p>
 <p><span class="math">\(Z = round(Y/Q_{step})\)</span></p>
 <p>Y is coefficients of the transform described above, Z is the quantized coefficient. H264 provided 52 values of Qstep, which are indexed by a Quantization Index, QP. Qstep increase by 12.5% for increment of 1 in QP and Qstep doubles in size for every increment of 6 in QP. QP chroma is derived from QP y so QP chroma is less than QP y for value of QP y above 30.</p>
-<p><img alt="Photo" src="/blogs/2017/11/20/h264_trans_qdq_algorithm/h264_qdq_Qstep_and_QP.png" width="80%"></p>
+<p><img alt="Photo" src="https://huyunf.github.io/blogs/2017/11/20/h264_trans_qdq_algorithm/h264_qdq_Qstep_and_QP.png" width="80%"></p>
 <p>Assume <span class="math">\(W=CXC^T\)</span>, then <span class="math">\(Z_{ij} = round(W_{ij} \frac{PF}{Q_{step}})\)</span> The PF is the value of matrix <span class="math">\(E\)</span>, whose value depending on the position <span class="math">\((i,j)\)</span></p>
 <p>To simplify the calculation, and enlarge the dynamic range, let's assume <span class="math">\(\frac{MF}{2^{qbits}}=\frac{PF}{Qstep}\)</span> where <span class="math">\(qbits=15+floor(QP/6)\)</span> Then:</p>
 <p><span class="math">\(Z_{ij} = round(W_{ij} \frac{MF}{2^{qbits}}) = (W_{ij}MF + f)&gt;&gt;qbits\)</span> </p>
 <p>The MF is pre-calculated table as followed. For QP&gt;5, the factores MF remain unchaged but the divisor <span class="math">\(2^{qbits}\)</span> increased by a factor of 2 for each increment of 6 in QP.</p>
-<p><img alt="Photo" src="/blogs/2017/11/20/h264_trans_qdq_algorithm/h264_qdq_MF.png" width="80%"></p>
+<p><img alt="Photo" src="https://huyunf.github.io/blogs/2017/11/20/h264_trans_qdq_algorithm/h264_qdq_MF.png" width="80%"></p>
 <h4><strong>Dequantization</strong></h4>
 <hr>
 <p>According to previous chapter, the process of inverse transform is <span class="math">\(X^{\prime}=C^T(Y \bigotimes E)C\)</span>. Then the inverse quantization is:</p>
 <p><span class="math">\(X^{\prime}_{ij}=Z_{ij}*Qstep*PF*64\)</span></p>
-<p>Let <span class="math">\(V=Qstep * PF *64\)</span>, which is also defined as pre-calculated table for <span class="math">\(0 \eqslantless QP \eqslantless 5\)</span></p>
+<p>Let <span class="math">\(V=Qstep * PF *64\)</span>, which is also defined as pre-calculated table for <span class="math">\(0 \leq QP \leq 5\)</span></p>
 <p><span class="math">\(W^{\prime}_{ij} = Z_{ij}*V_{ij}*2^{floor(QP/6)}\)</span></p>
 <p>The table of V:</p>
-<p><img alt="Photo" src="/blogs/2017/11/20/h264_trans_qdq_algorithm/h264_qdq_dqV.png" width="80%"></p>
+<p><img alt="Photo" src="https://huyunf.github.io/blogs/2017/11/20/h264_trans_qdq_algorithm/h264_qdq_dqV.png" width="80%"></p>
+<h4><strong>4x4 luma DC coefficient transform and quantization (16x16 Intra-mode only)</strong></h4>
+<hr>
+<p>If the macroblock is encoded in 16x16 Intra prediction mode (where the entire 16x16 luminance component is predicted from neighbouring pixels), each 4x4 residual block is first transformed using the “core” transform described above <span class="math">\(C_{f}XC^{T}_{f}\)</span>. The DC coefficient of each 4x4 block is then transformed again using a 4x4 Hadamard transform:</p>
+<p><img alt="Photo" src="https://huyunf.github.io/blogs/2017/11/20/h264_trans_qdq_algorithm/h264_qdq_4x4hadamard.png" width="80%"></p>
+<p><span class="math">\(W_D\)</span> is the block of 4x4 DC coefficients. The output coefficients <span class="math">\(Y_{D}\)</span> are divided by 2 (with rounding). Then the <span class="math">\(Y_D\)</span> are quantized:</p>
+<p><span class="math">\(Z_{D(ij)}=(Y_{D(ij)} \bullet MF_{(0,0)} + 2f) &gt;&gt; (qbits+1)\)</span></p>
+<p>When decoding, the inverse Hadamard transform is applied followed by rescaling (not reversed as might be expected). That is [4x4DCT-&gt;4x4DC Hadamard-&gt;DC quantization-&gt;4x4DC inverse Hadamard-&gt;DC dequantization]:</p>
+<p><img alt="Photo" src="https://huyunf.github.io/blogs/2017/11/20/h264_trans_qdq_algorithm/h264_qdq_4x4_inversehadamard.png" width="80%"></p>
+<p>If <span class="math">\(QP \geq 12\)</span>, dequantization is performed by:</p>
+<p><span class="math">\(W_D = W_{QD} \bullet V_{(0,0)} \bullet 2^{floor(QP/6)-2}\)</span></p>
+<p>if <span class="math">\(QP &lt; 12\)</span>, dequantization is performed by:</p>
+<p><span class="math">\(W_D = (W_{QD} \bullet V_{(0,0)}+2^{1-floor(QP/6))}&gt;&gt;(2-floor(QP/6))\)</span></p>
+<h4><strong>2x2 chroma DC coefficient transform and quantization</strong></h4>
+<hr>
+<p>The DC of chroma have the same operation of chroma. 2x2 Transform:</p>
+<p><img alt="Photo" src="https://huyunf.github.io/blogs/2017/11/20/h264_trans_qdq_algorithm/h264_qdq_2x2hadamard.png" width="50%"></p>
+<p>The Quantization of the 2x2 output if performed by:</p>
+<p><span class="math">\(Z_{D} = Y_{D(ij)} \bullet MF_{(0,0)}+2f)&gt;&gt;(qbits+1)\)</span></p>
+<p>during decoding, the inverse transform is:</p>
+<p><img alt="Photo" src="https://huyunf.github.io/blogs/2017/11/20/h264_trans_qdq_algorithm/h264_qdq_2x2_inversehadamard.png" width="50%"></p>
+<p>If <span class="math">\(QP \geq 6\)</span>, dequantization is performed by:</p>
+<p><span class="math">\(W_D = W_{QD} \bullet V_{(0,0)} \bullet 2^{floor(QP/6)-1}\)</span></p>
+<p>if <span class="math">\(QP &lt; 6\)</span>, dequantization is performed by:</p>
+<p><span class="math">\(W_D = (W_{QD} \bullet V_{(0,0)})&gt;&gt;1\)</span></p>
+<h4><strong>Transform &amp; QDQ Flow</strong></h4>
+<hr>
+<p><img alt="Photo" src="https://huyunf.github.io/blogs/2017/11/20/h264_trans_qdq_algorithm/h264_qdq_flowchart.png" width="100%"></p>
 <script type="text/javascript">if (!document.getElementById('mathjaxscript_pelican_#%@#$@#')) {
     var align = "center",
         indent = "0em",
@@ -182,24 +209,24 @@
 <h4>Pages</h4>
 
  <ul>
-      <li><a href="/pages/about.html">About</a></li>
+      <li><a href="https://huyunf.github.io/pages/about.html">About</a></li>
   </ul>
 
 <h4>Categories</h4>
 <ul class="blank">
-		<li><a href="/category/life.html">Life</a></li>
-		<li><a href="/category/technology.html">Technology</a></li>
+		<li><a href="https://huyunf.github.io/category/life.html">Life</a></li>
+		<li><a href="https://huyunf.github.io/category/technology.html">Technology</a></li>
 </ul>
 
 
 <h4>Tags</h4>
 	<ul class="blank">
-	    <li class="tag-4"><a href="/tag/web.html">web</a></li>
-	    <li class="tag-3"><a href="/tag/x264.html">x264</a></li>
-	    <li class="tag-1"><a href="/tag/video-codec.html">Video Codec</a></li>
-	    <li class="tag-4"><a href="/tag/travel.html">Travel</a></li>
-	    <li class="tag-4"><a href="/tag/pelican.html">Pelican</a></li>
-	    <li class="tag-1"><a href="/tag/h264.html">h264</a></li>
+	    <li class="tag-1"><a href="https://huyunf.github.io/tag/video-codec.html">Video Codec</a></li>
+	    <li class="tag-1"><a href="https://huyunf.github.io/tag/h264.html">h264</a></li>
+	    <li class="tag-4"><a href="https://huyunf.github.io/tag/travel.html">Travel</a></li>
+	    <li class="tag-3"><a href="https://huyunf.github.io/tag/x264.html">x264</a></li>
+	    <li class="tag-4"><a href="https://huyunf.github.io/tag/pelican.html">Pelican</a></li>
+	    <li class="tag-4"><a href="https://huyunf.github.io/tag/web.html">web</a></li>
 </ul>
 
 
@@ -262,8 +289,8 @@
         (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
     }());
 </script>
-  <script src="/theme/js/libs/jquery-1.9.1.min.js"></script>
-  <script src="/theme/js/libs/gumby.min.js"></script>
-  <script src="/theme/js/plugins.js"></script>
+  <script src="https://huyunf.github.io/theme/js/libs/jquery-1.9.1.min.js"></script>
+  <script src="https://huyunf.github.io/theme/js/libs/gumby.min.js"></script>
+  <script src="https://huyunf.github.io/theme/js/plugins.js"></script>
 </body>
 </html>
