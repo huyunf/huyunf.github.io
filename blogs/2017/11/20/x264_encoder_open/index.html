@@ -106,7 +106,129 @@ x264_ratecontrol_new                            // rate control start
 <p><em>x264_predict_xxx_init ~ x264_bitstream_xxx_init</em>:</p>
 <p>Funtion pointer initialization for those utility function like prediection, dct. etc</p>
 </li>
+<li>
+<p><em>x264_cabac_init</em>:</p>
+<p>The cabac initial algorithm detail, please refer to <a href="https://huyunf.github.io/blogs/2017/11/20/h264_entropy_coding/">Entropy Coding</a></p>
+<div class="highlight"><pre><span></span>void x264_cabac_init( x264_t *h )
+{
+    int ctx_count = CHROMA444 ? 1024 : 460;
+    for( int i = 0; i &lt; 4; i++ )
+    {
+        const int8_t (*cabac_context_init)[1024][2] = i == 0 ? &amp;x264_cabac_context_init_I
+                                                             : &amp;x264_cabac_context_init_PB[i-1];
+        for( int qp = 0; qp &lt;= QP_MAX_SPEC; qp++ )
+            for( int j = 0; j &lt; ctx_count; j++ )
+            {
+                int state = x264_clip3( (((*cabac_context_init)[j][0] * qp) &gt;&gt; 4) + (*cabac_context_init)[j][1], 1, 126 );
+                x264_cabac_contexts[i][qp][j] = (X264_MIN( state, 127-state ) &lt;&lt; 1) | (state &gt;&gt; 6);
+            }
+    }
+}
+</pre></div>
+
+
+<p>For x264, each entry of context is:</p>
+<p><span class="math">\(min(\sigma_{pre}, 127-\sigma_{pre})&lt;&lt;1 | (\sigma_{pre}&gt;&gt;6)\)</span></p>
+<p>which put the <span class="math">\(\varpi\)</span> in LSB, that is:</p>
+<p>if (<span class="math">\(\sigma_{pre} \leq 63\)</span>) <span class="math">\(\sigma_{pre} | (\sigma_{pre}&gt;&gt;6)\)</span></p>
+<p>else <span class="math">\((127-\sigma_{pre})&lt;&lt;1 | (\sigma_{pre}&gt;&gt;6)\)</span></p>
+</li>
+<li>
+<p><em>x264_analyse_init_costs</em>:</p>
+<p>Initial a cost table for refernce selection &amp; mv decision. The cost table was build for each possible qp. </p>
+<p>step 1: initial logs array:</p>
+<div class="highlight"><pre><span></span>logs[0] = 0.718f;
+for( int i = 1; i &lt;= 2*4*2048; i++ )
+    logs[i] = log2f( i+1 ) * 2.0f + 1.718f;
+</pre></div>
+
+
+<p>step 2: build up cost table:</p>
+<div class="highlight"><pre><span></span>// MV cost
+lambda = pow(2,qp/6-2)
+for( int i = 0; i &lt;= 2*4*2048; i++ )
+    h-&gt;cost_mv[qp][-i] = h-&gt;cost_mv[qp][i] = X264_MIN( lambda * logs[i] + .5f, (1&lt;&lt;16)-1 );
+
+// ref cost
+for( int i = 0; i &lt; 3; i++ )
+for( int j = 0; j &lt; 33; j++ )
+    x264_cost_ref[qp][i][j] = X264_MIN( i ? lambda * bs_size_te( i, j ) : 0, (1&lt;&lt;16)-1 );
+
+// frac MV cost
+for( int i = -2*2048; i &lt; 2*2048; i++ )
+    h-&gt;cost_mv_fpel[qp][j][i] = h-&gt;cost_mv[qp][i*4+j];
+
+// mode cost: 9 for intra 8 for inter? 16x16, 16x8, 8x16, 8x8, 8x8, 8x4, 4x8, 4x4
+for( int i = 0; i &lt; 17; i++ )
+    cost_i4x4_mode[i] = 3*lambda*(i!=8);
+</pre></div>
+
+
+</li>
+<li>
+<p><em>x264_lookahead_init</em>:</p>
+<p>Initial several parameters and frame list for lookahead routine.</p>
+</li>
+<li>
+<p><em>x264_ratecontrol_new</em>:</p>
+<p>Please refer to <a href="https://huyunf.github.io/blogs/2017/12/05/x264_rate_control/">x264 rate control</a> </p>
+</li>
 </ul>
+<script type="text/javascript">if (!document.getElementById('mathjaxscript_pelican_#%@#$@#')) {
+    var align = "center",
+        indent = "0em",
+        linebreak = "false";
+
+    if (false) {
+        align = (screen.width < 768) ? "left" : align;
+        indent = (screen.width < 768) ? "0em" : indent;
+        linebreak = (screen.width < 768) ? 'true' : linebreak;
+    }
+
+    var mathjaxscript = document.createElement('script');
+    mathjaxscript.id = 'mathjaxscript_pelican_#%@#$@#';
+    mathjaxscript.type = 'text/javascript';
+    mathjaxscript.src = 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML';
+    mathjaxscript[(window.opera ? "innerHTML" : "text")] =
+        "MathJax.Hub.Config({" +
+        "    config: ['MMLorHTML.js']," +
+        "    TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'AMS' } }," +
+        "    jax: ['input/TeX','input/MathML','output/HTML-CSS']," +
+        "    extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']," +
+        "    displayAlign: '"+ align +"'," +
+        "    displayIndent: '"+ indent +"'," +
+        "    showMathMenu: true," +
+        "    messageStyle: 'normal'," +
+        "    tex2jax: { " +
+        "        inlineMath: [ ['\\\\(','\\\\)'] ], " +
+        "        displayMath: [ ['$$','$$'] ]," +
+        "        processEscapes: true," +
+        "        preview: 'TeX'," +
+        "    }, " +
+        "    'HTML-CSS': { " +
+        "        styles: { '.MathJax_Display, .MathJax .mo, .MathJax .mi, .MathJax .mn': {color: 'inherit ! important'} }," +
+        "        linebreaks: { automatic: "+ linebreak +", width: '90% container' }," +
+        "    }, " +
+        "}); " +
+        "if ('default' !== 'default') {" +
+            "MathJax.Hub.Register.StartupHook('HTML-CSS Jax Ready',function () {" +
+                "var VARIANT = MathJax.OutputJax['HTML-CSS'].FONTDATA.VARIANT;" +
+                "VARIANT['normal'].fonts.unshift('MathJax_default');" +
+                "VARIANT['bold'].fonts.unshift('MathJax_default-bold');" +
+                "VARIANT['italic'].fonts.unshift('MathJax_default-italic');" +
+                "VARIANT['-tex-mathit'].fonts.unshift('MathJax_default-italic');" +
+            "});" +
+            "MathJax.Hub.Register.StartupHook('SVG Jax Ready',function () {" +
+                "var VARIANT = MathJax.OutputJax.SVG.FONTDATA.VARIANT;" +
+                "VARIANT['normal'].fonts.unshift('MathJax_default');" +
+                "VARIANT['bold'].fonts.unshift('MathJax_default-bold');" +
+                "VARIANT['italic'].fonts.unshift('MathJax_default-italic');" +
+                "VARIANT['-tex-mathit'].fonts.unshift('MathJax_default-italic');" +
+            "});" +
+        "}";
+    (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
+}
+</script>
             </div><!-- /.entry-content -->
             <div class="comments">
               <h3>Comments</h3>
@@ -141,12 +263,12 @@ x264_ratecontrol_new                            // rate control start
 
 <h4>Tags</h4>
 	<ul class="blank">
-	    <li class="tag-3"><a href="https://huyunf.github.io/tag/x264.html">x264</a></li>
-	    <li class="tag-4"><a href="https://huyunf.github.io/tag/pelican.html">Pelican</a></li>
-	    <li class="tag-4"><a href="https://huyunf.github.io/tag/travel.html">Travel</a></li>
 	    <li class="tag-4"><a href="https://huyunf.github.io/tag/web.html">web</a></li>
 	    <li class="tag-1"><a href="https://huyunf.github.io/tag/h264.html">h264</a></li>
+	    <li class="tag-2"><a href="https://huyunf.github.io/tag/x264.html">x264</a></li>
+	    <li class="tag-4"><a href="https://huyunf.github.io/tag/pelican.html">Pelican</a></li>
 	    <li class="tag-1"><a href="https://huyunf.github.io/tag/video-codec.html">Video Codec</a></li>
+	    <li class="tag-4"><a href="https://huyunf.github.io/tag/travel.html">Travel</a></li>
 </ul>
 
 
