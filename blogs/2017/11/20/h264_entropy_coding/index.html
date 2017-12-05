@@ -64,7 +64,284 @@
               </address>
             </footer><!-- /.post-info -->
             <div class="entry-content">
-              
+              <h4><strong>Introduction</strong></h4>
+<hr>
+<p>The entropy coding is another very important part of video coding. The purpose of entorpy coding is to compress the syntax data, residual pixel data. The h264 standard specifies two types of entropy coding: Context-based Adaptive Binary Arithmetic Coding (CABAC) and Variable-Length Coding (VLC)</p>
+<h4><strong>Variable Length Coding (VLC)</strong></h4>
+<hr>
+<ul>
+<li><em>Exp-Golomb Entropy Coding:</em></li>
+</ul>
+<p>Exp-Golomb codes are variable lenght codes with regular construction. The codeword is constructed as:</p>
+<p><span class="math">\([M zeros][1][INFO]\)</span></p>
+<p>INFO is an M-bits field carrying information. Each Exp-Golomb codeword can be constructed by the encoder based on its index code_num:</p>
+<p><span class="math">\(INFO = code\_num + 1 - 2^M\)</span></p>
+<p>A codeword can be decoded as followed step:</p>
+<ol>
+<li>Read in M leading zeros followed by 1</li>
+<li>Read M-bit INFO field</li>
+<li><span class="math">\(code\_num = 2^M + INFO -1\)</span></li>
+</ol>
+<p>The is a table for 1-exp-golomb codewords:</p>
+<p>
+<table class="table table-hover">
+    
+    
+    <thead>
+    <tr>
+        
+        
+        <th>code_num </th>
+        
+        <th> codewrod</th>
+        
+    </tr>
+    </thead>
+    
+    <tbody>
+        
+        <tr>
+            
+            
+            <td>0 </td>
+            
+            <td> 1</td>
+            
+        </tr>
+        
+        <tr>
+            
+            
+            <td>1 </td>
+            
+            <td> 010</td>
+            
+        </tr>
+        
+        <tr>
+            
+            
+            <td>2 </td>
+            
+            <td> 011</td>
+            
+        </tr>
+        
+        <tr>
+            
+            
+            <td>3 </td>
+            
+            <td> 00100</td>
+            
+        </tr>
+        
+        <tr>
+            
+            
+            <td>4 </td>
+            
+            <td> 00101</td>
+            
+        </tr>
+        
+        <tr>
+            
+            
+            <td>5 </td>
+            
+            <td> 00110</td>
+            
+        </tr>
+        
+        <tr>
+            
+            
+            <td>6 </td>
+            
+            <td> 00111</td>
+            
+        </tr>
+        
+        <tr>
+            
+            
+            <td>7 </td>
+            
+            <td> 0001000</td>
+            
+        </tr>
+        
+        <tr>
+            
+            
+            <td>8 </td>
+            
+            <td> 0001001</td>
+            
+        </tr>
+        
+    </tbody>
+</table></p>
+<ul>
+<li><em>Unsigned Direct Mapping:</em></li>
+</ul>
+<p>Flaged as ue(v), code_num = v. Used for MB type, reference frame index and others</p>
+<ul>
+<li><em>Signed Mapping:</em></li>
+</ul>
+<p>Flaged as se(v), used for motion vector difference, delta QP and others. v is mapped to code_num as follows: </p>
+<p><span class="math">\(code\_num = 2|v| (v&lt;0)\)</span></p>
+<p><span class="math">\(code\_num = 2|v|-1 (v \geq 0)\)</span></p>
+<ul>
+<li><em>Mapped Symbols:</em></li>
+</ul>
+<p>Flaged as me(v). Parameter v is mapped to code_num according to a table sepcified in the standard spec. The mapping is used or CBP.</p>
+<ul>
+<li><em>Context-based Adaptive Variable Length Coding (CAVLC):</em></li>
+</ul>
+<p>The CAVLC is used to encode residual, zig-zag ordered 4x4(and 2x2) blocks of transform coefficients. The CAVLC encoding proceeds as follows:</p>
+<ol>
+<li>Encode the number of coefficients and trailing ones (coeff_token)</li>
+<li>Encode the sign of each T1</li>
+<li>Encode the levels of the remaining non-zero coefficients</li>
+<li>Encode the total number of zeros before the last coefficient</li>
+<li>Encode each run of zeros</li>
+</ol>
+<p><img alt="Photo" src="https://huyunf.github.io/blogs/2017/11/20/h264_entropy_coding/h264_entropy_cavlc_encode.png" width="80%"></p>
+<p>At decoder part, do the reverse operation:</p>
+<p><img alt="Photo" src="https://huyunf.github.io/blogs/2017/11/20/h264_entropy_coding/h264_entropy_cavlc_decode.png" width="80%"></p>
+<h4><strong>Context-based Adaptive Binary Arithmetic Coding (CABAC)</strong></h4>
+<hr>
+<p>Here is an <a href="https://huyunf.github.io/blogs/2017/11/20/h264_entropy_coding/cabac.pdf">artical</a> introduce the CABAC algorithm in H264. </p>
+<ul>
+<li><em>The CABAC Framework:</em></li>
+</ul>
+<p>The CABAC encoding process consist of, at most, three steps:</p>
+<ol>
+<li>binarization</li>
+<li>context modeling</li>
+<li>binary arithmetic coding</li>
+</ol>
+<p><img alt="Photo" src="https://huyunf.github.io/blogs/2017/11/20/h264_entropy_coding/h264_entropy_cabac_flow.png" width="80%"></p>
+<ul>
+<li><em>Binarization:</em></li>
+</ul>
+<p>There several types of binarization method:</p>
+<ol>
+<li>unary and truncated unary binarization</li>
+<li>kth order Exp-Golomb binarization</li>
+<li>fixed length binarization</li>
+</ol>
+<p>In the binarization step, a given nonbinary valued syntax element is uniquely mapped to a binary sequence, a so-called bin string. When a binary valued syntax element is given, this initial step is bypassed.</p>
+<ul>
+<li><em>Context Modeling:</em></li>
+</ul>
+<p>In the so-called regular coding mode, prior to the actual arithmetic coding process the given binary decision which, in the sequel, we will refer to as a bin, enters the context modeling stage, where a probability model is selected such that the corresponding choice may depend on previously encoded syntax elements or bins. Then, after the assignment of a context model the bin value along with its associated model is passed to the regular coding engine, where the final stage of arithmetic encoding together with a subsequent model updating takes place.</p>
+<p>Each syntax element has context indices and each context indices has an corresponding status. The status will be used to calculate the current context's probability. Furthermore, the status will be updated after being used to encoding one bin. Then the next time the bin of the context will use the updated syntax for encoding. </p>
+<p>H264's spec provided the table for syntax elements and associated range of context indices:</p>
+<p><img alt="Photo" src="https://huyunf.github.io/blogs/2017/11/20/h264_entropy_coding/h264_entropy_cabac_context.png" width="40%"></p>
+<ul>
+<li><em>Binary Arithmetic Coding:</em></li>
+</ul>
+<p>Binary arithmetic coding is based on the principle of recursive interval subdivision that involves the following elementary multiplication operation. Suppose the <em>lease probable symbol (LPS)</em> is <span class="math">\(p_{LPS} \in (0,0.5]\)</span>. The given interval is represented by lower bound <span class="math">\(L\)</span> and its width(range) <span class="math">\(R\)</span>. Then the given interval is subdivided into two subintervals, <span class="math">\(R_{LPS} = R \centerdot p_{LPS}\)</span> which is associated with the <span class="math">\(LPS\)</span>, and the <span class="math">\(R_{MPS} = R - R_{LPS}\)</span> assigned to most probable symbol (MPS), which have the probability <span class="math">\(1-p_{LPS}\)</span></p>
+<p>The cost of multiplication is big, thus CABAC proposed a method with multiplication free, which is table search based method. The basic idea of multiplication free approach is to project both the legal range <span class="math">\([R_{min}, R_{max})\)</span> of interval width R and the probability range associated with the <span class="math">\(LPS\)</span> onto a small set of representive value <span class="math">\(Q = \{Q_0,...,Q_{K-1}\}\)</span> and <span class="math">\(P = \{p_0,...,p_{N-1}\}\)</span> respectively. The realization of H264 choose <span class="math">\(k=4\)</span> and <span class="math">\(N=64\)</span>, then the values of <span class="math">\(R \centerdot P_{LPS}\)</span> are obtained by a <span class="math">\(K \times N (4 \times 64)\)</span> table</p>
+<p>ps. One special operation is bypass coding mode, which be used for nearly uniform distributed <span class="math">\((p \approx 0.5)\)</span></p>
+<ul>
+<li><em>Probability Estimation:</em></li>
+</ul>
+<p>The basic idea of the new multiplication free binary arithmetic coding scheme for H.264/AVC relies on the assumption that the estimated probabilities of each context model can be represented by a sufficiently limited set of representative values. For H264 CABAC, 64 representative probabilities values </p>
+<p><span class="math">\(p_{\sigma} = \alpha \centerdot p_{\sigma - 1}\)</span> for all <span class="math">\(\sigma = 1,...,63\)</span></p>
+<p><span class="math">\(\alpha = (\frac{0.01875}{0.5})^{1/63}\)</span> and <span class="math">\(p_0 = 0.5\)</span></p>
+<p>Each context model in CABAC can be completely determined by two parameters: its current estimate of the <span class="math">\(LPS\)</span> probability, which is characterized by index <span class="math">\(\sigma\)</span> between 1 and 63, and its value of MPS <span class="math">\(\varpi\)</span> being either 0 or 1. Thus, probability estimation in CABAC is performed by using a total number of 128 different probability states, each of them efficiently represented by a 7-bit integer value. In fact, one of the state indices <span class="math">\((\sigma = 63)\)</span> is related to an autonomous, nonadaptive state with a fixed value of MPS, which is only used for encoding of binary decisions before termination of the arithmetic codeword, as further explained below. Therefore, only 126 probability states are effectively used for the representation and adaptation of all (adaptive) context models.</p>
+<ul>
+<li><em>Probability Update:</em></li>
+</ul>
+<p><img alt="Photo" src="https://huyunf.github.io/blogs/2017/11/20/h264_entropy_coding/h264_entropy_cabac_ptrans.png" width="50%"></p>
+<p>As already stated above, all probability models in CABAC with one exception are (backward) adaptive models, where an update of the probability estimation is performed after each symbol has been encoded. Actually, for a given probability state, the update depends on the state index and the value of the encoded symbol identified either as a LPS or a MPS. As a result of the updating process, a new probability state is derived, which consists of a potentially modified LPS probability estimate and, if necessary, a modified MPS value.</p>
+<p>If <span class="math">\(\sigma = 62\)</span> is the following value is also MPS <span class="math">\(\varpi\)</span>, then <span class="math">\(\sigma\)</span> keep equal to 62 until a LPS come. </p>
+<p>if <span class="math">\(\sigma = 0\)</span> LPS reach equal probability status. <span class="math">\(\sigma\)</span> keep equal to 0 but the value of LPS and MPS will switch, which means the previous LPS's probability increased to become MPS, then if the next time comes still LPS, <span class="math">\(\sigma = \sigma + 1\)</span> will not stick to <span class="math">\(\sigma = 0\)</span></p>
+<ul>
+<li><em>Initialization and Reset of Probability States:</em></li>
+</ul>
+<p>CABAC provides a built-in mechanism for incorporating some a priori knowledge about the source statistics in the form of appropriate initialization values for each of the probability models. This so-called initialization process for context models allows an adjustment of the initial probability states in CABAC on two levels. </p>
+<p><img alt="Photo" src="https://huyunf.github.io/blogs/2017/11/20/h264_entropy_coding/h264_entropy_cabac_init.png" width="50%"></p>
+<ul>
+<li><em>Regular Coding Mode:</em></li>
+</ul>
+<p>In the first and major step, the current interval is subdivided according to the given probability estimates. The current interval range <span class="math">\(R\)</span> is approximated by a quantized value <span class="math">\(Q(R)\)</span> using an equi-partition of the whole range <span class="math">\(2^8 \leq R &lt; 2^9\)</span> [256, 512) into four cells. But instead of using the corresponding representative quantized range values <span class="math">\(Q_0, Q_1, Q_2, Q_3\)</span> explicitly in the CABAC engine, <span class="math">\(Q(R)\)</span> is only addressed by its quantizer index <span class="math">\(\rho\)</span>, which is</p>
+<p><span class="math">\(\rho = (R&gt;&gt;6) \&amp; 3\)</span></p>
+<p>Then, this index <span class="math">\(\rho\)</span> and the probability state <span class="math">\(\sigma\)</span> index are used as entries in a 2-D table TabRangeLPS to determine the (approximate) LPS related subinterval range. Here, the table TabRangeLPS contains all 64 4 pre-computed product values <span class="math">\(p_{\sigma} \centerdot Q_{\rho}\)</span> for <span class="math">\(0 \leq \sigma \leq 63\)</span> and <span class="math">\(0 \leq \rho \leq 3\)</span> in 8-bit precision.</p>
+<p><span class="math">\(R_{LPS} = TabRangeLPS(\sigma, \rho)\)</span></p>
+<p><img alt="Photo" src="https://huyunf.github.io/blogs/2017/11/20/h264_entropy_coding/h264_entropy_cabac_regular.png" width="40%"></p>
+<ul>
+<li><em>Bypass Coding Mode:</em></li>
+</ul>
+<p>To speed up the encoding (and decoding) of symbols, for which <span class="math">\(R-R_{LPS} \approx R_{LPS} \approx R/2\)</span> is assumed to hold, the regular arithmetic encoding process as described in the previous paragraph is simplified to a large extent. First, a “bypass” of the probability estimation and update process is established, and second, the interval subdivision is performed such that two equisized subintervals are provided in the interval subdivision stage. But instead of explicitly halving the current interval range R, the variable L is doubled before choosing the lower or upper subinterval depending on the value of the symbol to encode (0 or 1, respectively). In this way, doubling of L and R in the subsequent renormalization is no longer required provided that the renormalization in the bypass is operated with doubled decision thresholds.</p>
+<p><img alt="Photo" src="https://huyunf.github.io/blogs/2017/11/20/h264_entropy_coding/h264_entropy_cabac_bypass.png" width="35%"></p>
+<ul>
+<li><em>Renormalization and Carry-Over Control:</em></li>
+</ul>
+<p>A renormalization operation after interval subdivision is required whenever the new interval range R no longer stays within its legal range of <span class="math">\([2^8, 2^9)\)</span> . Each time renormalization must be carried out, one or more bits can be output. However, in certain cases, the polarity of the output bits will be resolved in subsequent output steps, i.e., carry propagation might occur in the arithmetic encoder.</p>
+<ul>
+<li><em>Termination of Arithmetic Code Word:</em></li>
+</ul>
+<p>A special fixed, i.e., nonadapting probability state with index <span class="math">\(\sigma = 63\)</span> was designed such that the associated table entries <span class="math">\(TabRangeLPS[63, \rho]\)</span>, and hence <span class="math">\(R_{LPS}\)</span> are determined by a fixed value of 2 regardless of the given quantized range index <span class="math">\(\rho\)</span>. This guarantees that for the terminating syntax element in a slice which, in general, is given by the LPS value of the end of slice flag, 7 bits of output are produced in the related renormalization step. Two more disambiguating bits are needed to terminate the arithmetic codeword for a given slice. By preventing the decoder from performing a renormalization after recovering the terminating syntax element, the decoder never reads more bits than were actually produced by the encoder for that given slice.</p>
+<script type="text/javascript">if (!document.getElementById('mathjaxscript_pelican_#%@#$@#')) {
+    var align = "center",
+        indent = "0em",
+        linebreak = "false";
+
+    if (false) {
+        align = (screen.width < 768) ? "left" : align;
+        indent = (screen.width < 768) ? "0em" : indent;
+        linebreak = (screen.width < 768) ? 'true' : linebreak;
+    }
+
+    var mathjaxscript = document.createElement('script');
+    mathjaxscript.id = 'mathjaxscript_pelican_#%@#$@#';
+    mathjaxscript.type = 'text/javascript';
+    mathjaxscript.src = 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML';
+    mathjaxscript[(window.opera ? "innerHTML" : "text")] =
+        "MathJax.Hub.Config({" +
+        "    config: ['MMLorHTML.js']," +
+        "    TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'AMS' } }," +
+        "    jax: ['input/TeX','input/MathML','output/HTML-CSS']," +
+        "    extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']," +
+        "    displayAlign: '"+ align +"'," +
+        "    displayIndent: '"+ indent +"'," +
+        "    showMathMenu: true," +
+        "    messageStyle: 'normal'," +
+        "    tex2jax: { " +
+        "        inlineMath: [ ['\\\\(','\\\\)'] ], " +
+        "        displayMath: [ ['$$','$$'] ]," +
+        "        processEscapes: true," +
+        "        preview: 'TeX'," +
+        "    }, " +
+        "    'HTML-CSS': { " +
+        "        styles: { '.MathJax_Display, .MathJax .mo, .MathJax .mi, .MathJax .mn': {color: 'inherit ! important'} }," +
+        "        linebreaks: { automatic: "+ linebreak +", width: '90% container' }," +
+        "    }, " +
+        "}); " +
+        "if ('default' !== 'default') {" +
+            "MathJax.Hub.Register.StartupHook('HTML-CSS Jax Ready',function () {" +
+                "var VARIANT = MathJax.OutputJax['HTML-CSS'].FONTDATA.VARIANT;" +
+                "VARIANT['normal'].fonts.unshift('MathJax_default');" +
+                "VARIANT['bold'].fonts.unshift('MathJax_default-bold');" +
+                "VARIANT['italic'].fonts.unshift('MathJax_default-italic');" +
+                "VARIANT['-tex-mathit'].fonts.unshift('MathJax_default-italic');" +
+            "});" +
+            "MathJax.Hub.Register.StartupHook('SVG Jax Ready',function () {" +
+                "var VARIANT = MathJax.OutputJax.SVG.FONTDATA.VARIANT;" +
+                "VARIANT['normal'].fonts.unshift('MathJax_default');" +
+                "VARIANT['bold'].fonts.unshift('MathJax_default-bold');" +
+                "VARIANT['italic'].fonts.unshift('MathJax_default-italic');" +
+                "VARIANT['-tex-mathit'].fonts.unshift('MathJax_default-italic');" +
+            "});" +
+        "}";
+    (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
+}
+</script>
             </div><!-- /.entry-content -->
             <div class="comments">
               <h3>Comments</h3>
@@ -99,12 +376,12 @@
 
 <h4>Tags</h4>
 	<ul class="blank">
-	    <li class="tag-4"><a href="https://huyunf.github.io/tag/pelican.html">Pelican</a></li>
 	    <li class="tag-3"><a href="https://huyunf.github.io/tag/x264.html">x264</a></li>
-	    <li class="tag-1"><a href="https://huyunf.github.io/tag/video-codec.html">Video Codec</a></li>
+	    <li class="tag-4"><a href="https://huyunf.github.io/tag/pelican.html">Pelican</a></li>
 	    <li class="tag-4"><a href="https://huyunf.github.io/tag/travel.html">Travel</a></li>
 	    <li class="tag-4"><a href="https://huyunf.github.io/tag/web.html">web</a></li>
 	    <li class="tag-1"><a href="https://huyunf.github.io/tag/h264.html">h264</a></li>
+	    <li class="tag-1"><a href="https://huyunf.github.io/tag/video-codec.html">Video Codec</a></li>
 </ul>
 
 
