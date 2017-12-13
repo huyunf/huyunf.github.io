@@ -5,28 +5,28 @@ xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 
 <url>
 <loc>https://huyunf.github.io/</loc>
-<lastmod>2017-12-05T22:22:53-00:00</lastmod>
+<lastmod>2017-12-13T01:46:46-00:00</lastmod>
 <changefreq>daily</changefreq>
 <priority>0.5</priority>
 </url>
 
 <url>
 <loc>https://huyunf.github.io/archives.html</loc>
-<lastmod>2017-12-05T22:22:53-00:00</lastmod>
+<lastmod>2017-12-13T01:46:46-00:00</lastmod>
 <changefreq>daily</changefreq>
 <priority>0.5</priority>
 </url>
 
 <url>
 <loc>https://huyunf.github.io/tags.html</loc>
-<lastmod>2017-12-05T22:22:53-00:00</lastmod>
+<lastmod>2017-12-13T01:46:46-00:00</lastmod>
 <changefreq>daily</changefreq>
 <priority>0.5</priority>
 </url>
 
 <url>
 <loc>https://huyunf.github.io/categories.html</loc>
-<lastmod>2017-12-05T22:22:53-00:00</lastmod>
+<lastmod>2017-12-13T01:46:46-00:00</lastmod>
 <changefreq>daily</changefreq>
 <priority>0.5</priority>
 </url>
@@ -36,6 +36,27 @@ xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 <lastmod>2017-11-13T11:38:00-08:00</lastmod>
 <changefreq>monthly</changefreq>
 <priority>0.5</priority>
+</url>
+
+<url>
+<loc>https://huyunf.github.io/blogs/2017/12/12/x264_mb_analyse_and_coding/</loc>
+<lastmod>2017-12-12T00:00:00-08:00</lastmod>
+<changefreq>monthly</changefreq>
+<priority>0.7</priority>
+</url>
+
+<url>
+<loc>https://huyunf.github.io/blogs/2017/12/06/x264_adaptive_quant/</loc>
+<lastmod>2017-12-06T00:00:00-08:00</lastmod>
+<changefreq>monthly</changefreq>
+<priority>0.7</priority>
+</url>
+
+<url>
+<loc>https://huyunf.github.io/blogs/2017/12/06/x264_slice_type_decision/</loc>
+<lastmod>2017-12-06T00:00:00-08:00</lastmod>
+<changefreq>monthly</changefreq>
+<priority>0.7</priority>
 </url>
 
 <url>
@@ -124,21 +145,21 @@ xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 
 <url>
 <loc>https://huyunf.github.io/category/technology.html</loc>
-<lastmod>2017-12-05T00:00:00-07:53</lastmod>
+<lastmod>2017-12-12T00:00:00-07:53</lastmod>
 <changefreq>daily</changefreq>
 <priority>0.5</priority>
 </url>
 
 <url>
 <loc>https://huyunf.github.io/tag/video-codec.html</loc>
-<lastmod>2017-12-05T00:00:00-07:53</lastmod>
+<lastmod>2017-12-12T00:00:00-07:53</lastmod>
 <changefreq>daily</changefreq>
 <priority>0.5</priority>
 </url>
 
 <url>
 <loc>https://huyunf.github.io/tag/x264.html</loc>
-<lastmod>2017-12-05T00:00:00-07:53</lastmod>
+<lastmod>2017-12-12T00:00:00-07:53</lastmod>
 <changefreq>daily</changefreq>
 <priority>0.5</priority>
 </url>
@@ -173,7 +194,7 @@ xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 
 <url>
 <loc>https://huyunf.github.io/author/yf.html</loc>
-<lastmod>2017-12-05T00:00:00-07:53</lastmod>
+<lastmod>2017-12-12T00:00:00-07:53</lastmod>
 <changefreq>daily</changefreq>
 <priority>0.5</priority>
 </url>

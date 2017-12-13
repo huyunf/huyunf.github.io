@@ -80,13 +80,142 @@ for(loop by frame number){
 
 
 <p>The <code>x264_encoder_open()</code> function does several initial task for the following encoding process. For more detail, please refer to <a href="https://huyunf.github.io/blogs/2017/11/20/x264_encoder_open/">x264 Encoder Open</a> </p>
+<h3><strong>x264_encoder_encode</strong></h3>
+<hr>
 <p>The <code>encode_frame()</code> will lead to <code>x264_encoder_encode</code>, which is the true main encoding funcion. In <code>x264_encoder_encode</code>, it </p>
 <ol>
 <li>prepare thread for encoding task</li>
-<li>setup new frame from picture list<ul>
+<li>
+<p>setup new frame from picture list</p>
+<ul>
 <li>setting frame parameters like resolution, picture structure. etc</li>
-<li>initial parameters for <em>adaptive MB level quantization</em> by calling function <code>x264_adaptive_quant_frame</code></li>
+<li>initial parameters for <span style="color:green;">adaptive MB level quantization</span> by calling function <code>x264_adaptive_quant_frame</code>. For detail algorithm please refer to <a href="https://huyunf.github.io/blogs/2017/12/06/x264_adaptive_quant/">x264 Adaptive Quant</a></li>
+<li>prepare low resolution frame for zero pass <code>x264_frame_init_lowres</code></li>
+<li>put frame into process queue <code>x264_lookahead_put_frame</code>. If enable multiple thread, each thread will get frame from the list and start their own process</li>
 </ul>
+<p>The prepare process should fill the <span style="color:green;">prepare frame list</span>. And the number of frame need to input to the list is decided by</p>
+<div class="highlight"><pre><span></span>    if( h-&gt;frames.i_input &lt;= h-&gt;frames.i_delay + 1 - h-&gt;i_thread_frames )
+    {
+        ...
+        return 0;
+    }
+</pre></div>
+
+
+</li>
+<li>
+<p>analyze picture in lookahead <code>x264_lookahead_get_frames</code>, mainly for get slice type</p>
+<ul>
+<li>decide slice type <code>x264_slicetype_decide</code>. For more detail about the x264 slice type decision algorithm. Please refer to <a href="https://huyunf.github.io/blogs/2017/12/06/x264_slice_type_decision/">x264 Slice Type Decision</a></li>
+</ul>
+</li>
+<li>
+<p>several top level syntax process, like reference list prepare <code>x264_reference_build_list</code>, nal structure prepare. etc</p>
+</li>
+<li>
+<p>bit stream structure bs prepare <code>bs_init</code>, write header if necessary:</p>
+<ul>
+<li>aud</li>
+<li>if key frame, write SPS and PPS</li>
+<li>period sei, extra sei, pic timing sei, sei for blu-ray. etc</li>
+</ul>
+</li>
+<li>
+<p>perform rate control <code>x264_ratecontrol_start</code> and get the global qp <code>x264_ratecontrol_qp</code>. For more detail of x264 rate control, please refer to <a href="https://huyunf.github.io/blogs/2017/12/05/x264_rate_control/">x264 rate control</a></p>
+</li>
+<li>
+<p>initial slice header <code>x264_slice_init</code></p>
+</li>
+<li>
+<p>weighted prediction prepare <code>x264_macroblock_bipred_init</code> for B frame and <code>x264_weighted_pred_init</code></p>
+<p>Brief summery of algorithm in <code>x264_macroblock_bipred_init</code>. poc0 and poc1 represent the poc number from forward reference list and backward reference list.</p>
+<div class="highlight"><pre><span></span>td = x264_clip3( poc1 - poc0, -128, 127 );
+if( td == 0 /* || pic0 is a long-term ref */ )
+    dist_scale_factor = 256;
+else
+{
+    int tb = x264_clip3( cur_poc - poc0, -128, 127 );
+    int tx = (16384 + (abs(td) &gt;&gt; 1)) / td;
+    dist_scale_factor = x264_clip3( (tb * tx + 32) &gt;&gt; 6, -1024, 1023 );
+}
+</pre></div>
+
+
+<p>|&lt;--------tb----------&gt;| </p>
+<p>|----------------------|-----|</p>
+<p>|&lt;-------------td-----------&gt;|</p>
+<p>tx = 16k / td</p>
+<p>dist_scale_factor = tb/td (multiple 16k to extend dynamic range)</p>
+</li>
+<li>
+<p>slice encoding entry <code>x264_slices_write</code> or <code>x264_threaded_slices_write</code> when multiple thread pool enabled</p>
+</li>
+</ol>
+<h3><strong>x264_slice_write</strong></h3>
+<hr>
+<p>The <code>x264_slices_write</code> contain a while loop which will deal with each slice of the frame. It will first gt <code>i_first_mb</code> and <code>i_last_mb</code> for slice header and then call slice encoding function <code>x264_slice_write</code></p>
+<div class="highlight"><pre><span></span>    static void *x264_slices_write( x264_t *h )
+    {
+        while( h-&gt;sh.i_first_mb + SLICE_MBAFF*h-&gt;mb.i_mb_stride &lt;= last_thread_mb )
+        {
+            //... h-&gt;sh.i_last_mb;
+            if( x264_stack_align( x264_slice_write, h ) )
+                goto fail;
+            //... h-&gt;sh.i_first_mb
+        }
+    }
+</pre></div>
+
+
+<p>In function <code>x264_slice_write</code>, the real encoding process happened</p>
+<ol>
+<li>
+<p>get slice level qp from rate control <code>x264_ratecontrol_mb_qp</code></p>
+</li>
+<li>
+<p>write slice header <code>x264_slice_header_write</code></p>
+</li>
+<li>
+<p>if cabac enabled, several cabac initial step <code>x264_cabac_context_init</code> and <code>x264_cabac_encode_init</code>, which initiate the cabac context according to <em>slice type</em> and <em>qp value</em></p>
+</li>
+</ol>
+<p>Then there goes to the while loop for encoding each mb (i_first_mb to i_last_mb)</p>
+<ol>
+<li>
+<p>do the hpel &amp; deblocking for top row <code>x264_fdec_filter_row</code></p>
+</li>
+<li>
+<p>load cache data for each MB, <code>x264_macroblock_cache_load_xxx</code>. In this function, decoder prepare the context of top and left MB data if necessary. Most data store in <code>x264_t.mb.cache</code></p>
+</li>
+<li>
+<p>macroblock analyse <code>x264_macroblock_analyse</code>, which doing so-called Mode decision. The decision choose the best rdo mode from intra &amp; inter separately and then select the better from intra &amp; inter. For more detail of the analyse, please refer to <a href="https://huyunf.github.io/blogs/2017/12/12/x264_mb_analyse_and_coding/">x264 MB Analyse and Coding</a></p>
+</li>
+<li>
+<p>following is real encoding process <code>x264_macroblock_encode</code>. The function encode the MB's syntax into bitstream and generate reconstruct data, which will be used as reference for later frame. For more detail please refer to <a href="https://huyunf.github.io/blogs/2017/12/12/x264_mb_analyse_and_coding/">x264 MB Analyse and Coding</a></p>
+</li>
+<li>
+<p>several steps for entropy <code>cabac</code> or <code>cavlc</code> engine. </p>
+</li>
+<li>
+<p>save context into cache <code>x264_macroblock_cache_save</code></p>
+</li>
+<li>
+<p>mb level rate control <code>x264_ratecontrol_mb</code> <a href="https://huyunf.github.io/blogs/2017/12/05/x264_rate_control/">x264 rate control</a></p>
+</li>
+<li>
+<p>several steps for accumulating mb stats</p>
+</li>
+<li>
+<p>calculate deblock strength values <code>x264_macroblock_deblock_strength</code>. actual deblocking is done per-row along with hpel</p>
+</li>
+</ol>
+<p>After the while loop for each MB, several step for </p>
+<ol>
+<li>
+<p>deblocking for last row</p>
+</li>
+<li>
+<p>end of entropy coding engine</p>
 </li>
 </ol>
             </div><!-- /.entry-content -->
@@ -123,12 +252,12 @@ for(loop by frame number){
 
 <h4>Tags</h4>
 	<ul class="blank">
+	    <li class="tag-4"><a href="https://huyunf.github.io/tag/travel.html">Travel</a></li>
+	    <li class="tag-1"><a href="https://huyunf.github.io/tag/x264.html">x264</a></li>
 	    <li class="tag-4"><a href="https://huyunf.github.io/tag/web.html">web</a></li>
 	    <li class="tag-1"><a href="https://huyunf.github.io/tag/h264.html">h264</a></li>
-	    <li class="tag-2"><a href="https://huyunf.github.io/tag/x264.html">x264</a></li>
-	    <li class="tag-4"><a href="https://huyunf.github.io/tag/pelican.html">Pelican</a></li>
 	    <li class="tag-1"><a href="https://huyunf.github.io/tag/video-codec.html">Video Codec</a></li>
-	    <li class="tag-4"><a href="https://huyunf.github.io/tag/travel.html">Travel</a></li>
+	    <li class="tag-4"><a href="https://huyunf.github.io/tag/pelican.html">Pelican</a></li>
 </ul>
 
 
