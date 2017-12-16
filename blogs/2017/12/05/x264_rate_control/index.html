@@ -66,6 +66,80 @@
             <div class="entry-content">
               <h4><strong>Outline</strong></h4>
 <hr>
+<p>Rate control allows selection of encoding parameters to maximize quality under the constraint imposed by specified bitrate and decoder video buffer. The rate control in H.264/AVC can be performed at three different granularities – group of pictures level, picture level and macroblocks level. At each level, the rate control selects quantization parameter (QP) values, that determine the quantization of transform coefficients. Increase in QP increases quantization step size and decreases the bitrate. The rate control in x264 is based upon libavcodec's implementation, and is mostly empirical. There are five different rate control modes in x264 and are described below. In the hypothetical reference decoder (VBV) mode, x264 allows each macroblock to have a different QP, while in other modes QP is determined for an entire frame.</p>
+<p><em>Two pass (2pass)</em></p>
+<p>In this approach, data is obtained about each frame during a first pass, allowing x264 to allocate bits globally over the file.</p>
+<p><em>Average bitrate (ABR)</em></p>
+<p>This is a one-pass scheme where the rate control must be done without knowledge of future frames.</p>
+<ol>
+<li>
+<p>run a fast motion estimation algorithm over a half-resolution version of the frame, and use the Sum of Absolute Hadamard Transformed Differences (SATD) of the residuals as the complexity. Also, the complexity of the following GOP is unknown, so I-frame QPs are based on the past. </p>
+</li>
+<li>
+<p>We do not know the complexities of future frames, so we can only scale based on the past. The scaling factor is chosen to be the one that would have resulted in the desired bitrate if it had been applied to all frames so far.</p>
+</li>
+<li>
+<p>Long and short term compensation is the same as in 2pass. By tuning the strength of compensation, it is possible to obtain quality ranging from close to 2pass (but with file size error of ±10%) to lower quality with reasonably strict file size.</p>
+</li>
+</ol>
+<p><em>VBV-compliant constant bitrate (CBR)</em></p>
+<p>This is a one-pass mode designed for real-time streaming.</p>
+<ol>
+<li>
+<p>It uses the same complexity estimation for computing bit size as ABR.</p>
+</li>
+<li>
+<p>The scaling factor used for achieving the requested file-size is based on a local average (dependent on VBV buffer size) instead of all past frames.</p>
+</li>
+<li>
+<p>The overflow compensation is the same algorithm as in ABR, but runs after each row of macroblocks instead of per-frame.</p>
+</li>
+</ol>
+<p><em>Constant rate-factor</em></p>
+<p>This is a one-pass mode that is optimal if the user does not desire a specific bitrate, but specifies quality instead. It is the same as ABR, except that the scaling factor is a user defined constant and no overflow compensation is done.</p>
+<p><em>Constant quantizer</em></p>
+<p>This is a one-pass mode where QPs are simply based on whether the frame is I-, P- or Bframe.</p>
+<h4><strong>Process</strong></h4>
+<hr>
+<p>For this section, we don't discuss the two pass algorithm, only focus on one pass rate control algorithm.</p>
+<p><em>x264_ratecontrol_new @ x264_encoder_open</em></p>
+<ul>
+<li>
+<p>initial parameters like fps, bitrate...</p>
+</li>
+<li>
+<p><code>x264_ratecontrol_init_reconfigurable</code>: special parameters initial for CRF &amp; VBV_CBR rate control</p>
+</li>
+<li>
+<p>set mb level qp adjustable flag: b_variable_qp if VBV_CBR or aq_mode enabled: </p>
+<div class="highlight"><pre><span></span>h-&gt;mb.b_variable_qp = rc-&gt;b_vbv || h-&gt;param.rc.i_aq_mode;
+</pre></div>
+
+
+</li>
+<li>
+<p>if use ABR, initial complex sum as </p>
+<div class="highlight"><pre><span></span>rc-&gt;cplxr_sum = .01 * pow( 7.0e5, rc-&gt;qcompress ) * pow( h-&gt;mb.i_mb_count, 0.5 );
+</pre></div>
+
+
+</li>
+<li>
+<p>set qp offset for P and B frame:</p>
+<div class="highlight"><pre><span></span>rc-&gt;ip_offset = 6.0 * log2f( h-&gt;param.rc.f_ip_factor );
+rc-&gt;pb_offset = 6.0 * log2f( h-&gt;param.rc.f_pb_factor );
+</pre></div>
+
+
+</li>
+<li>
+<p>get level step according to qp step:</p>
+<div class="highlight"><pre><span></span>rc-&gt;lstep = pow( 2, h-&gt;param.rc.i_qp_step / 6.0 );
+</pre></div>
+
+
+</li>
+</ul>
             </div><!-- /.entry-content -->
             <div class="comments">
               <h3>Comments</h3>
@@ -100,12 +174,12 @@
 
 <h4>Tags</h4>
 	<ul class="blank">
+	    <li class="tag-4"><a href="https://huyunf.github.io/tag/pelican.html">Pelican</a></li>
+	    <li class="tag-1"><a href="https://huyunf.github.io/tag/h264.html">h264</a></li>
 	    <li class="tag-4"><a href="https://huyunf.github.io/tag/travel.html">Travel</a></li>
 	    <li class="tag-1"><a href="https://huyunf.github.io/tag/x264.html">x264</a></li>
-	    <li class="tag-4"><a href="https://huyunf.github.io/tag/web.html">web</a></li>
-	    <li class="tag-1"><a href="https://huyunf.github.io/tag/h264.html">h264</a></li>
 	    <li class="tag-1"><a href="https://huyunf.github.io/tag/video-codec.html">Video Codec</a></li>
-	    <li class="tag-4"><a href="https://huyunf.github.io/tag/pelican.html">Pelican</a></li>
+	    <li class="tag-4"><a href="https://huyunf.github.io/tag/web.html">web</a></li>
 </ul>
 
 
