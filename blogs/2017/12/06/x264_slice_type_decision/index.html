@@ -69,9 +69,52 @@
 <p>Doc of <a href="https://huyunf.github.io/blogs/2017/12/06/x264_slice_type_decision/MBtree paper.pdf">MB Tree</a></p>
 <h4><strong>Process</strong></h4>
 <hr>
-<ul>
-<li>x264_slicetype_decide *</li>
-</ul>
+<p>The x264 decide slice type in a GOP structure unit, which include one reference frame (I,P) and no / several non-reference frame (B). The processed frame will be shift out frame lookahead frame list and put into frame's current list.</p>
+<div class="highlight"><pre><span></span>if( !h-&gt;frames.current[0] )
+    x264_lookahead_get_frames( h );
+</pre></div>
+
+
+<p>The slice type analyse and decide was first handle in <code>x264_lookahead_get_frames</code>. The function will call <code>x264_slicetype_decide</code> and <code>x264_slicetype_analyse</code>. </p>
+<div class="highlight"><pre><span></span>x264_stack_align( x264_slicetype_decide, h );
+/* For MB-tree and VBV lookahead, we have to perform propagation analysis on I-frames too. */
+if( h-&gt;lookahead-&gt;b_analyse_keyframe &amp;&amp; IS_X264_TYPE_I( h-&gt;lookahead-&gt;last_nonb-&gt;i_type ) )
+    x264_stack_align( x264_slicetype_analyse, h, shift_frames );
+</pre></div>
+
+
+<p><span style="color:green;"><em>x264_slicetype_decide</em></span></p>
+<hr>
+<ol>
+<li>
+<p>The lookahead routine accumulate many frame in it's queue for analyse. The frames in list <code>next</code> in lookahead structure are waiting for process. The first part of <code>x264_slicetype_decide</code> is to calculate the duration of each frame in the lookahead list <code>next</code></p>
+</li>
+<li>
+<p>If user choose 2-pass rate control the slice type has been analysed and decide in the 1st-pass. Thus, at current stage, just need to read the result of the 1st-pass. Otherwise, call <code>x264_slicetype_analyse</code>, which will be analyse in the following section.</p>
+<div class="highlight"><pre><span></span>if( h-&gt;param.rc.b_stat_read )
+    x264_ratecontrol_slice_type();
+else if(...)
+    x264_slicetype_analyse();
+</pre></div>
+
+
+<p>As stated above, slice type analyse will determine slice type in a gop.  </p>
+</li>
+<li>
+<p>Calculate the frame costs ahead of time for x264_rc_analyse_slice while still have lowres. The frame cost will be used for rate control. </p>
+</li>
+</ol>
+<p><span style="color:green;"><em>x264_slicetype_analyse</em></span></p>
+<hr>
+<p>The <code>x264_slicetype_analyse</code> focus on the following tasks:</p>
+<ol>
+<li>
+<p>Decide the frame type. For non-b setting, actully, the slice type decision is straightforward that keyframe (IDR/I) followed by interframe (P).</p>
+<p>For sequence with B frame, x264 propose two B adaptive algorithm <code>X264_B_ADAPT_FAST</code> and <code>X264_B_ADAPT_TRELLIS</code> and one non-adaptive algorithm <code>X264_B_ADAPT_NONE</code>.</p>
+<p>For <code>X264_B_ADAPT_NONE</code>, the encoder will follow the gop structure constructed by keyframe intervel, bframe number, etc. For example, if user set <code>--bframes 2</code> and <code>--keyint 30</code>. The encoded gop structure will be IPBBPBBPBB... with IDR picture appear every 30 frames.</p>
+<p>The <code>X264_B_ADAPT_TRELLIS</code> is complicate and slow, we will <span style="color:blue;">discuss in the future</span>.</p>
+</li>
+</ol>
             </div><!-- /.entry-content -->
             <div class="comments">
               <h3>Comments</h3>
@@ -106,11 +149,11 @@
 
 <h4>Tags</h4>
 	<ul class="blank">
-	    <li class="tag-4"><a href="https://huyunf.github.io/tag/pelican.html">Pelican</a></li>
-	    <li class="tag-1"><a href="https://huyunf.github.io/tag/h264.html">h264</a></li>
 	    <li class="tag-4"><a href="https://huyunf.github.io/tag/travel.html">Travel</a></li>
+	    <li class="tag-1"><a href="https://huyunf.github.io/tag/h264.html">h264</a></li>
 	    <li class="tag-1"><a href="https://huyunf.github.io/tag/x264.html">x264</a></li>
 	    <li class="tag-1"><a href="https://huyunf.github.io/tag/video-codec.html">Video Codec</a></li>
+	    <li class="tag-4"><a href="https://huyunf.github.io/tag/pelican.html">Pelican</a></li>
 	    <li class="tag-4"><a href="https://huyunf.github.io/tag/web.html">web</a></li>
 </ul>
 

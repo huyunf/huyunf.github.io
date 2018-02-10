@@ -95,16 +95,40 @@ As it happens, SSIM basically is PSNR weighted by variance in a similar fashion,
 <p>The x264 AQ algorithm have 3 mode: <code>X264_AQ_VARIANCE</code>, <code>X264_AQ_AUTOVARIANCE</code> and <code>X264_AQ_AUTOVARIANCE_BIASED</code>, plus the none AQ mode <code>X264_AQ_NONE</code></p>
 <h4><strong>Process</strong></h4>
 <hr>
-<p><em>x264_adaptive_quant_frame @ x264_encoder_encode</em></p>
+<p><em>initial qp offset -&gt; x264_adaptive_quant_frame @ x264_encoder_encode</em></p>
+<ul>
+<li><em>energy</em>:</li>
+</ul>
 <p>Before introduce how x264 get qp adjust value for each MB, we need to introduce how it define energy. In AQ mode calc, it define energy as <a href="https://en.wikipedia.org/wiki/Variance">variance</a></p>
-<div class="highlight"><pre><span></span>ssd - (sum * sum &gt;&gt; shift)
+<div class="highlight"><pre><span></span>E[X^2] - E[X]^2 = ssd - (sum * sum &gt;&gt; shift)
 </pre></div>
 
 
+<ul>
+<li><em>brief</em>:</li>
+</ul>
 <p>The main purpose of this function is to initialize the parameter <code>qp_offset</code> for each MB. </p>
+<p>There are two input parameters control the result of aq mode:</p>
+<p>rc.i_aq_mode: (0~3). (1) X264_AQ_NONE[0]-&gt;no aq mode (2)X264_AQ_VARIANCE[1]-&gt;mb tree mode (3)       X264_AQ_AUTOVARIANCE [3]  (4) X264_AQ_AUTOVARIANCE_BIASED(3)</p>
+<p>rc.f_aq_strength: The value should be less than 1 and smaller the better when film has much details and complex structure such as "animation" (0.6) and film with "grain" characteristic (0.5). The value should be larger than 1 and bigger the better when film has much plain area such as "still image" (1.2) or "touhou" (1.3).</p>
+<ul>
+<li><em>step 1: get qp_adj, strength, etc.</em>:</li>
+</ul>
+<p>For mode 'X264_AQ_NONE' or f_aq_strength==0, which mean the MB level adaptive quantization is disabled. So the f_qp_offset are set to '0' or external input value. </p>
 <p>For mode <code>X264_AQ_AUTOVARIANCE</code> and <code>X264_AQ_AUTOVARIANCE_BIASED</code>, first step is to initial <code>avg_adj</code>, <code>strength</code> and <code>bias_strength</code></p>
-<p><span class="math">\(qp\_adj = (energy * bit\_depth\_correction + 1) ^ {0.125}\)</span></p>
-<p><span class="math">\(qp\_adj\_pow2 = qp\_adj * qp\_adj\)</span></p>
+<div class="highlight"><pre><span></span>for( int mb_y = 0; mb_y &lt; h-&gt;mb.i_mb_height; mb_y++ )
+    for( int mb_x = 0; mb_x &lt; h-&gt;mb.i_mb_width; mb_x++ )
+    {
+        uint32_t energy = x264_ac_energy_mb( h, mb_x, mb_y, frame );
+        float qp_adj = powf( energy * bit_depth_correction + 1, 0.125f );
+        frame-&gt;f_qp_offset[mb_x + mb_y*h-&gt;mb.i_mb_stride] = qp_adj;
+        avg_adj += qp_adj;
+        avg_adj_pow2 += qp_adj * qp_adj;
+    }
+</pre></div>
+
+
+<p>The larger the "energy" (variance), the bigger the qp adjust value.</p>
 <p>For these two mode, their strength and average adjustment is obtained by:</p>
 <div class="highlight"><pre><span></span>avg_adj /= h-&gt;mb.i_mb_count;
 avg_adj_pow2 /= h-&gt;mb.i_mb_count;
@@ -119,6 +143,9 @@ bias_strength = h-&gt;param.rc.f_aq_strength;
 </pre></div>
 
 
+<ul>
+<li><em>step 2: calcualte qp adjust for each mb</em>:</li>
+</ul>
 <p>The second step is to calc the qp adjustment:</p>
 <div class="highlight"><pre><span></span>if( h-&gt;param.rc.i_aq_mode == X264_AQ_AUTOVARIANCE_BIASED )
 {
@@ -141,61 +168,6 @@ frame-&gt;f_qp_offset[mb_xy] = frame-&gt;f_qp_offset_aq[mb_xy] = qp_adj;
 
 
 <p>Then the qp offset table for each MB has been generated.</p>
-<script type="text/javascript">if (!document.getElementById('mathjaxscript_pelican_#%@#$@#')) {
-    var align = "center",
-        indent = "0em",
-        linebreak = "false";
-
-    if (false) {
-        align = (screen.width < 768) ? "left" : align;
-        indent = (screen.width < 768) ? "0em" : indent;
-        linebreak = (screen.width < 768) ? 'true' : linebreak;
-    }
-
-    var mathjaxscript = document.createElement('script');
-    mathjaxscript.id = 'mathjaxscript_pelican_#%@#$@#';
-    mathjaxscript.type = 'text/javascript';
-    mathjaxscript.src = 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML';
-    mathjaxscript[(window.opera ? "innerHTML" : "text")] =
-        "MathJax.Hub.Config({" +
-        "    config: ['MMLorHTML.js']," +
-        "    TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'AMS' } }," +
-        "    jax: ['input/TeX','input/MathML','output/HTML-CSS']," +
-        "    extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']," +
-        "    displayAlign: '"+ align +"'," +
-        "    displayIndent: '"+ indent +"'," +
-        "    showMathMenu: true," +
-        "    messageStyle: 'normal'," +
-        "    tex2jax: { " +
-        "        inlineMath: [ ['\\\\(','\\\\)'] ], " +
-        "        displayMath: [ ['$$','$$'] ]," +
-        "        processEscapes: true," +
-        "        preview: 'TeX'," +
-        "    }, " +
-        "    'HTML-CSS': { " +
-        "        styles: { '.MathJax_Display, .MathJax .mo, .MathJax .mi, .MathJax .mn': {color: 'inherit ! important'} }," +
-        "        linebreaks: { automatic: "+ linebreak +", width: '90% container' }," +
-        "    }, " +
-        "}); " +
-        "if ('default' !== 'default') {" +
-            "MathJax.Hub.Register.StartupHook('HTML-CSS Jax Ready',function () {" +
-                "var VARIANT = MathJax.OutputJax['HTML-CSS'].FONTDATA.VARIANT;" +
-                "VARIANT['normal'].fonts.unshift('MathJax_default');" +
-                "VARIANT['bold'].fonts.unshift('MathJax_default-bold');" +
-                "VARIANT['italic'].fonts.unshift('MathJax_default-italic');" +
-                "VARIANT['-tex-mathit'].fonts.unshift('MathJax_default-italic');" +
-            "});" +
-            "MathJax.Hub.Register.StartupHook('SVG Jax Ready',function () {" +
-                "var VARIANT = MathJax.OutputJax.SVG.FONTDATA.VARIANT;" +
-                "VARIANT['normal'].fonts.unshift('MathJax_default');" +
-                "VARIANT['bold'].fonts.unshift('MathJax_default-bold');" +
-                "VARIANT['italic'].fonts.unshift('MathJax_default-italic');" +
-                "VARIANT['-tex-mathit'].fonts.unshift('MathJax_default-italic');" +
-            "});" +
-        "}";
-    (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
-}
-</script>
             </div><!-- /.entry-content -->
             <div class="comments">
               <h3>Comments</h3>
@@ -230,11 +202,11 @@ frame-&gt;f_qp_offset[mb_xy] = frame-&gt;f_qp_offset_aq[mb_xy] = qp_adj;
 
 <h4>Tags</h4>
 	<ul class="blank">
-	    <li class="tag-4"><a href="https://huyunf.github.io/tag/pelican.html">Pelican</a></li>
-	    <li class="tag-1"><a href="https://huyunf.github.io/tag/h264.html">h264</a></li>
 	    <li class="tag-4"><a href="https://huyunf.github.io/tag/travel.html">Travel</a></li>
+	    <li class="tag-1"><a href="https://huyunf.github.io/tag/h264.html">h264</a></li>
 	    <li class="tag-1"><a href="https://huyunf.github.io/tag/x264.html">x264</a></li>
 	    <li class="tag-1"><a href="https://huyunf.github.io/tag/video-codec.html">Video Codec</a></li>
+	    <li class="tag-4"><a href="https://huyunf.github.io/tag/pelican.html">Pelican</a></li>
 	    <li class="tag-4"><a href="https://huyunf.github.io/tag/web.html">web</a></li>
 </ul>
 

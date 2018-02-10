@@ -95,7 +95,7 @@
 <p>The overflow compensation is the same algorithm as in ABR, but runs after each row of macroblocks instead of per-frame.</p>
 </li>
 </ol>
-<p><em>Constant rate-factor</em></p>
+<p><em>Constant rate-factor (CRF)</em></p>
 <p>This is a one-pass mode that is optimal if the user does not desire a specific bitrate, but specifies quality instead. It is the same as ABR, except that the scaling factor is a user defined constant and no overflow compensation is done.</p>
 <p><em>Constant quantizer</em></p>
 <p>This is a one-pass mode where QPs are simply based on whether the frame is I-, P- or Bframe.</p>
@@ -140,6 +140,122 @@ rc-&gt;pb_offset = 6.0 * log2f( h-&gt;param.rc.f_pb_factor );
 
 </li>
 </ul>
+<h4><strong>ABR</strong></h4>
+<hr>
+<p><em>x264_ratecontrol_new @ x264_encoder_open</em></p>
+<div class="highlight"><pre><span></span>if( rc-&gt;b_abr )
+{
+    /* FIXME ABR_INIT_QP is actually used only in CRF */
+#define ABR_INIT_QP (( h-&gt;param.rc.i_rc_method == X264_RC_CRF ? h-&gt;param.rc.f_rf_constant : 24 ) + QP_BD_OFFSET)
+    rc-&gt;accum_p_norm = .01;
+    rc-&gt;accum_p_qp = ABR_INIT_QP * rc-&gt;accum_p_norm;
+    /* estimated ratio that produces a reasonable QP for the first I-frame */
+    rc-&gt;cplxr_sum = .01 * pow( 7.0e5, rc-&gt;qcompress ) * pow( h-&gt;mb.i_mb_count, 0.5 );
+    rc-&gt;wanted_bits_window = 1.0 * rc-&gt;bitrate / rc-&gt;fps;
+    rc-&gt;last_non_b_pict_type = SLICE_TYPE_I;
+}
+</pre></div>
+
+
+<p>where the <span class="math">\(qcompress\)</span> should be the compression ratio, value range 0~1.0. The <span class="math">\(cplxr\_sum\)</span> is sum of bits*qscale/rceq.</p>
+<h4><strong>CRF</strong></h4>
+<hr>
+<p><em>x264_ratecontrol_init_reconfigurable @ x264_ratecontrol_new</em></p>
+<div class="highlight"><pre><span></span>if( h-&gt;param.rc.i_rc_method == X264_RC_CRF )
+{
+    /* Arbitrary rescaling to make CRF somewhat similar to QP.
+    * Try to compensate for MB-tree&#39;s effects as well. */
+    double base_cplx = h-&gt;mb.i_mb_count * (h-&gt;param.i_bframe ? 120 : 80);
+    double mbtree_offset = h-&gt;param.rc.b_mb_tree ? (1.0-h-&gt;param.rc.f_qcompress)*13.5 : 0;
+    rc-&gt;rate_factor_constant = pow( base_cplx, 1 - rc-&gt;qcompress )
+                            / qp2qscale( h-&gt;param.rc.f_rf_constant + mbtree_offset + QP_BD_OFFSET );
+}
+</pre></div>
+
+
+<h4><strong>Enable VBV Buffer</strong></h4>
+<hr>
+<p><em>x264_ratecontrol_init_reconfigurable @ x264_ratecontrol_new</em></p>
+<div class="highlight"><pre><span></span>if( h-&gt;param.rc.i_vbv_max_bitrate &gt; 0 &amp;&amp; h-&gt;param.rc.i_vbv_buffer_size &gt; 0 )
+{
+    // vbv parameters initial
+}
+</pre></div>
+
+
+<h4><strong>Two Pass</strong></h4>
+<hr>
+<p><em>parse_zones @ x264_ratecontrol_new</em></p>
+<div class="highlight"><pre><span></span>if( parse_zones( h ) &lt; 0 )
+{
+    //......
+}
+</pre></div>
+
+
+<p>Load stat file and init 2pass algo </p>
+<div class="highlight"><pre><span></span>if( h-&gt;param.rc.b_stat_read )
+{
+    //......
+}
+</pre></div>
+
+
+<script type="text/javascript">if (!document.getElementById('mathjaxscript_pelican_#%@#$@#')) {
+    var align = "center",
+        indent = "0em",
+        linebreak = "false";
+
+    if (false) {
+        align = (screen.width < 768) ? "left" : align;
+        indent = (screen.width < 768) ? "0em" : indent;
+        linebreak = (screen.width < 768) ? 'true' : linebreak;
+    }
+
+    var mathjaxscript = document.createElement('script');
+    mathjaxscript.id = 'mathjaxscript_pelican_#%@#$@#';
+    mathjaxscript.type = 'text/javascript';
+    mathjaxscript.src = 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML';
+    mathjaxscript[(window.opera ? "innerHTML" : "text")] =
+        "MathJax.Hub.Config({" +
+        "    config: ['MMLorHTML.js']," +
+        "    TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'AMS' } }," +
+        "    jax: ['input/TeX','input/MathML','output/HTML-CSS']," +
+        "    extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']," +
+        "    displayAlign: '"+ align +"'," +
+        "    displayIndent: '"+ indent +"'," +
+        "    showMathMenu: true," +
+        "    messageStyle: 'normal'," +
+        "    tex2jax: { " +
+        "        inlineMath: [ ['\\\\(','\\\\)'] ], " +
+        "        displayMath: [ ['$$','$$'] ]," +
+        "        processEscapes: true," +
+        "        preview: 'TeX'," +
+        "    }, " +
+        "    'HTML-CSS': { " +
+        "        styles: { '.MathJax_Display, .MathJax .mo, .MathJax .mi, .MathJax .mn': {color: 'inherit ! important'} }," +
+        "        linebreaks: { automatic: "+ linebreak +", width: '90% container' }," +
+        "    }, " +
+        "}); " +
+        "if ('default' !== 'default') {" +
+            "MathJax.Hub.Register.StartupHook('HTML-CSS Jax Ready',function () {" +
+                "var VARIANT = MathJax.OutputJax['HTML-CSS'].FONTDATA.VARIANT;" +
+                "VARIANT['normal'].fonts.unshift('MathJax_default');" +
+                "VARIANT['bold'].fonts.unshift('MathJax_default-bold');" +
+                "VARIANT['italic'].fonts.unshift('MathJax_default-italic');" +
+                "VARIANT['-tex-mathit'].fonts.unshift('MathJax_default-italic');" +
+            "});" +
+            "MathJax.Hub.Register.StartupHook('SVG Jax Ready',function () {" +
+                "var VARIANT = MathJax.OutputJax.SVG.FONTDATA.VARIANT;" +
+                "VARIANT['normal'].fonts.unshift('MathJax_default');" +
+                "VARIANT['bold'].fonts.unshift('MathJax_default-bold');" +
+                "VARIANT['italic'].fonts.unshift('MathJax_default-italic');" +
+                "VARIANT['-tex-mathit'].fonts.unshift('MathJax_default-italic');" +
+            "});" +
+        "}";
+    (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
+}
+</script>
             </div><!-- /.entry-content -->
             <div class="comments">
               <h3>Comments</h3>
@@ -174,11 +290,11 @@ rc-&gt;pb_offset = 6.0 * log2f( h-&gt;param.rc.f_pb_factor );
 
 <h4>Tags</h4>
 	<ul class="blank">
-	    <li class="tag-4"><a href="https://huyunf.github.io/tag/pelican.html">Pelican</a></li>
-	    <li class="tag-1"><a href="https://huyunf.github.io/tag/h264.html">h264</a></li>
 	    <li class="tag-4"><a href="https://huyunf.github.io/tag/travel.html">Travel</a></li>
+	    <li class="tag-1"><a href="https://huyunf.github.io/tag/h264.html">h264</a></li>
 	    <li class="tag-1"><a href="https://huyunf.github.io/tag/x264.html">x264</a></li>
 	    <li class="tag-1"><a href="https://huyunf.github.io/tag/video-codec.html">Video Codec</a></li>
+	    <li class="tag-4"><a href="https://huyunf.github.io/tag/pelican.html">Pelican</a></li>
 	    <li class="tag-4"><a href="https://huyunf.github.io/tag/web.html">web</a></li>
 </ul>
 
